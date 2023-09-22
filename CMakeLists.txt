@@ -15,4 +15,6 @@ add_executable(tb tb/sim_main.cpp)
 verilate(tb TRACE
   INCLUDE_DIRS "src" "tb"
   VERILATOR_ARGS --timing
-  SOURCES tb/top.sv)
+  PREFIX Vtop
+  SOURCES tb/top.sv src/rvcpu.sv
+)

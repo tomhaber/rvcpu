@@ -1,6 +1,4 @@
-`timescale 1ns / 1ps
-
-module sext_tb ();
+module sext_tb (output logic ready, output logic error);
 
 reg [11:0] in;
 wire [31:0] ext;
@@ -16,7 +14,7 @@ initial begin
 #10
     in = 12'b111111111111;
 #10
-    $finish;
+    ready = 1'b1;
 end
 
 endmodule : sext_tb

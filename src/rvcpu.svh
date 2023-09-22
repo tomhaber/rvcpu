@@ -1,0 +1,1 @@
+localparam Width = 32;
