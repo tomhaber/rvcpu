@@ -10,6 +10,9 @@ gen_imm #(.Width(32)) dut (
 );
 
 initial begin
+    error = 1'b0;
+    ready = 1'b0;
+
     op = 32'hd5050513;
     immt = rvcpu::alu_imm;
     expected = -32'd688;
