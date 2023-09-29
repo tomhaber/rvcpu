@@ -31,7 +31,7 @@ regfile #(.Width(32)) dut (
     .clk(clk), .reset(reset),
     .rs1(rs1), .rs1_valid(rs1_valid),
     .rs2(rs2), .rs2_valid(rs2_valid),
-    .rw(rw), .we(we), .wval(wval),
+    .rw(rw), .rw_valid(we), .wval(wval),
     .rd1(rd1), .rd2(rd2)
 );
 
