@@ -23,3 +23,4 @@ l1:
 	andi x5, x2, 5
 	slli x5, x2, 2
 	jalr x5, x2, 2
+	wfi

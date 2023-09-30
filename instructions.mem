@@ -18,3 +18,4 @@ f17ef2ef    //  jal	t0,2 <_start-0x100b6>
 00517293    //  andi	t0,sp,5
 00211293    //  slli	t0,sp,0x2
 002102e7    //  jalr	t0,2(sp)
+10500073    //  wfi
