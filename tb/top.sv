@@ -5,48 +5,52 @@ module top
    input logic reset);
 
 reg [Width-1:0] address;
-wire [Width-1:0] data;
-wire logic rs1_valid, rs2_valid, rw_valid;
+wire [Width-1:0] opcode;
+wire logic rs1_valid, rs2_valid, rd_valid;
 wire logic [3:0] aluop;
 
-wire [Width-1:0] rd1;
-wire [Width-1:0] rd2;
+wire [Width-1:0] rs1_data;
+wire [Width-1:0] rs2_data;
 
 wire rvcpu::reg_t rs1;
 wire rvcpu::reg_t rs2;
-wire rvcpu::reg_t rw;
+wire rvcpu::reg_t rd;
 reg [Width-1:0] res;
-wire logic is_zero, is_negative;
+wire logic is_zero, is_negative, is_overflow;
 wire logic vld_decode, is_jal, is_branch, is_wfi;
 wire rvcpu::imm_type_t immtype;
 
 instruction_memory #(.Width(Width)) imem(
-  .clk(clk), .address(address), .valid('b1), .data(data));
+  .clk(clk), .address(address), .valid('b1), .data(opcode));
 
 decoder dec(
-  .opcode(data),
+  .opcode(opcode),
   .rs1_valid(rs1_valid), .rs2_valid(rs2_valid),
-  .rd_valid(rw_valid),
+  .rd_valid(rd_valid),
   .aluop(aluop), .imm(immtype),
   .vld_decode(vld_decode),
   .is_branch(is_branch),
   .is_jal(is_jal),
   .is_wfi(is_wfi)
 );
-/*
+
+assign rd  = opcode[11:7];
+assign rs1 = opcode[19:15];
+assign rs2 = opcode[24:20];
+
 regfile #(.Width(Width)) regs (
     .clk(clk), .reset(reset),
     .rs1(rs1), .rs1_valid(rs1_valid),
     .rs2(rs2), .rs2_valid(rs2_valid),
-    .rw(rw), .rw_valid(rw_valid), .wval(res),
-    .rd1(rd1), .rd2(rd2)
+    .rd(rd), .rd_valid(rd_valid), .rd_data(res),
+    .rs1_data(rs1_data), .rs2_data(rs2_data)
 );
 alu #(.Width(Width)) alu(
-  .op('0),
-  .a(rd1), .b(rd2), .res(res),
-  .is_negative(is_negative), .is_zero(is_zero)
+  .op(aluop[2:0]), .invert_b(aluop[3]),
+  .a(rs1_data), .b(rs2_data), .res(res),
+  .is_negative(is_negative), .is_zero(is_zero), .is_overflow(is_overflow)
 );
-*/
+
 initial begin
   address = 'h0;
 #50
