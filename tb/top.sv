@@ -17,6 +17,8 @@ wire rvcpu::reg_t rs2;
 wire rvcpu::reg_t rw;
 reg [Width-1:0] res;
 wire logic is_zero, is_negative;
+wire logic vld_decode, is_jal, is_branch, is_wfi;
+wire rvcpu::imm_type_t immtype;
 
 instruction_memory #(.Width(Width)) imem(
   .clk(clk), .address(address), .valid('b1), .data(data));
@@ -24,9 +26,14 @@ instruction_memory #(.Width(Width)) imem(
 decoder dec(
   .opcode(data),
   .rs1_valid(rs1_valid), .rs2_valid(rs2_valid),
-  .rw_valid(rw_valid),
-  .aluop(aluop));
-
+  .rd_valid(rw_valid),
+  .aluop(aluop), .imm(immtype),
+  .vld_decode(vld_decode),
+  .is_branch(is_branch),
+  .is_jal(is_jal),
+  .is_wfi(is_wfi)
+);
+/*
 regfile #(.Width(Width)) regs (
     .clk(clk), .reset(reset),
     .rs1(rs1), .rs1_valid(rs1_valid),
@@ -39,7 +46,7 @@ alu #(.Width(Width)) alu(
   .a(rd1), .b(rd2), .res(res),
   .is_negative(is_negative), .is_zero(is_zero)
 );
-
+*/
 initial begin
   address = 'h0;
 #50

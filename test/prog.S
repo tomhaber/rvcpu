@@ -1,3 +1,5 @@
+// riscv64-linux-gnu-gcc prog.S  -o /tmp/test -march=rv32if -nostartfiles -static -nodefaultlibs -mcmodel=medany -mabi=ilp32f
+
   .section ".text.init"
   .globl _start
 _start:
@@ -9,8 +11,9 @@ _start:
 	and x7, x1, x6
 	sll x5, x2, x1
 	slt x5, x2, x1
-	beq x2, x3, 4
+	bne x2, x3, l1
 	sltu x5, x2, x1
+l1:
 	xor x5, x2, x1
 	srl x5, x2, x1
 	sra x5, x2, x1
