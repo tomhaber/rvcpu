@@ -16,5 +16,5 @@ verilate(tb TRACE
   INCLUDE_DIRS "src" "tb"
   VERILATOR_ARGS --timing
   PREFIX Vtop
-  SOURCES tb/top.sv src/rvcpu.sv
+  SOURCES src/rvcpu.sv tb/top.sv
 )

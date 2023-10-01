@@ -25,13 +25,14 @@ int main(int argc, char** argv, char** env) {
     top->clk = 0;
     while(!contextp->gotFinish()) {
         ++main_time;
-        top->clk = !top->clk;
         top->reset = (main_time < 10) ? 1 : 0;
 
         contextp->timeInc(1);
         top->eval();
         if(trace != nullptr)
             trace->dump(main_time);
+
+        top->clk = !top->clk;
     }
 
     top->final();

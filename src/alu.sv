@@ -6,30 +6,32 @@ module alu #(
     input logic [Width-1:0] b,
     input logic invert_b,
     output logic [Width-1:0] res,
-    output logic is_negative,
-    output logic is_zero,
-    output logic is_overflow
+    output rvcpu::alu_flags_t flags
 );
 
 logic [Width-1:0] eff_b;
+logic [Width:0] sum;
 
 always_comb begin
     eff_b = (invert_b) ? ~b : b;
+    sum = a + eff_b + {Width{invert_b}};
 
     case (op)
-        rvcpu::alu_and:  res = a & b;
-        rvcpu::alu_or:   res = a | b;
-        rvcpu::alu_sll:  res = a << b[4:0];
-        rvcpu::alu_srl:  res = a >> b[4:0];
-        rvcpu::alu_sra:  res = $signed(a) >>> b[4:0];
-        rvcpu::alu_add:  res = a + b;
-        rvcpu::alu_xor:  res = a ^ b;
-        rvcpu::alu_pass: res = a;
+        rvcpu::alu_and:  res = a & eff_b;
+        rvcpu::alu_or:   res = a | eff_b;
+        rvcpu::alu_sll:  res = a << eff_b[4:0];
+        rvcpu::alu_srl:  res = a >> eff_b[4:0];
+        rvcpu::alu_sra:  res = $signed(a) >>> eff_b[4:0];
+        rvcpu::alu_add:  res = sum[Width-1:0];
+        rvcpu::alu_xor:  res = a ^ eff_b;
+        rvcpu::alu_slt:  res = 'bx;
+        // rvcpu::alu_pass: res = a;
     endcase
 
-    is_zero = res == '0;
-    is_overflow = (a[7] == eff_b[7]) && (a[7] != res[7]);
-    is_negative = res[7];
+    flags.zero = res == '0;
+    flags.overflow = (a[7] == eff_b[7]) && (a[7] != res[7]);
+    flags.negative = res[7];
+    flags.carry = sum[Width];
 end
 
 endmodule
