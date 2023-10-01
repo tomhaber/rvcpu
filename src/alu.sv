@@ -12,16 +12,19 @@ module alu #(
 logic [Width-1:0] eff_b;
 logic [Width:0] sum;
 
+logic [$clog2(Width)-1:0] shamt;
+
 always_comb begin
     eff_b = (invert_b) ? ~b : b;
     sum = a + eff_b + {Width{invert_b}};
+    shamt = eff_b[$clog2(Width)-1:0];
 
     case (op)
         rvcpu::alu_and:  res = a & eff_b;
         rvcpu::alu_or:   res = a | eff_b;
-        rvcpu::alu_sll:  res = a << eff_b[4:0];
-        rvcpu::alu_srl:  res = a >> eff_b[4:0];
-        rvcpu::alu_sra:  res = $signed(a) >>> eff_b[4:0];
+        rvcpu::alu_sll:  res = a << shamt;
+        rvcpu::alu_srl:  res = a >> shamt;
+        rvcpu::alu_sra:  res = $signed(a) >>> shamt;
         rvcpu::alu_add:  res = sum[Width-1:0];
         rvcpu::alu_xor:  res = a ^ eff_b;
         rvcpu::alu_slt:  res = 'bx;
