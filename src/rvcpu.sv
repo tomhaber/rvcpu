@@ -1,5 +1,7 @@
 package rvcpu;
 
+parameter Width = 32;
+
 typedef enum [3:0] {
     alu_imm = 'b0001,
     uimm = 'b0010,
@@ -37,5 +39,37 @@ typedef struct packed {
     logic equal;
     logic less_than;
 } cmp_t;
+
+typedef logic [Width-1:0] pc_t;
+typedef logic [Width-1:0] addr_t;
+typedef logic [Width-1:0] data_t;
+typedef logic [31:0] opcode_t;
+
+typedef struct packed {
+    pc_t pc;
+    opcode_t opcode;
+} stage_if_t;
+
+typedef struct packed {
+    logic vld_decode;
+    logic is_branch;
+    logic is_jal;
+    logic is_wfi;
+    logic[3:0] aluop;
+    data_t a;
+    data_t b;
+    reg_t rd;
+    logic rd_valid;
+} stage_id_t;
+
+typedef struct packed {
+    data_t res;
+} stage_ex_t;
+
+typedef struct packed {
+    reg_t rd;
+    data_t rd_data;
+    logic rd_valid;
+} stage_wb_t;
 
 endpackage : rvcpu

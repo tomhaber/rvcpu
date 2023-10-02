@@ -1,9 +1,11 @@
-module flop #(parameter Width = 32) (
+module flop #(
+   type T = logic
+) (
     input logic clk,
     input logic reset,
-    input logic [Width-1:0] rstval /*= 'b0*/,
-    output logic [Width-1:0] q,
-    input logic [Width-1:0] d,
+    input T rstval /*= 'b0*/,
+    output T q,
+    input T d,
     input logic stall /*= 'b0*/
 );
    always_ff @(posedge clk) begin

@@ -25,7 +25,7 @@ int main(int argc, char** argv, char** env) {
     top->clk = 0;
     while(!contextp->gotFinish()) {
         ++main_time;
-        top->reset = (main_time < 10) ? 1 : 0;
+        top->rst = (main_time < 10) ? 1 : 0;
 
         contextp->timeInc(1);
         top->eval();

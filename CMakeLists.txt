@@ -14,7 +14,7 @@ add_executable(tb tb/sim_main.cpp)
 # Add the Verilated circuit to the target
 verilate(tb TRACE
   INCLUDE_DIRS "src" "tb"
-  VERILATOR_ARGS --timing
+  VERILATOR_ARGS --timing --trace-structs
   PREFIX Vtop
   SOURCES src/rvcpu.sv tb/top.sv
 )

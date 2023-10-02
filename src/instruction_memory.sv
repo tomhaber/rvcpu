@@ -18,9 +18,11 @@ initial begin
     // end
 end
 
-always_ff @( posedge clk ) begin
+always @(*) begin
     if(valid) begin
-        data = mem[address / 4];
+        data = mem[address[($clog2(MemSize)+2-1):2]];
+    end else begin
+        data = 0;
     end
 end
 

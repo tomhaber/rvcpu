@@ -14,28 +14,26 @@ module regfile #(
     output logic [Width-1:0] rs2_data
 );
 
-reg [Width-1:0] regs[31];
+reg [Width-1:0] regs[0:31];
 
 always @(posedge clk) begin
+    if(reset) begin
+        for (integer i = 0; i < 31; i++) begin
+            regs[i] = i;
+        end
+    end
 
-if(reset) begin
-    for (integer i = 0; i < 31; i++) begin
-        regs[i] = i;
+    if(rd_valid && rd != 0) begin
+        regs[rd - 1] <= rd_data;
     end
 end
 
-if(rd_valid) begin
-    regs[rd - 1] <= rd_data;
+always @(*) begin
+    rs1_data = (rs1_valid && rs1 != 0) ? regs[rs1 - 1] : 0;
 end
 
-if(rs1_valid) begin
-    rs1_data <= (rs1 != 0) ? regs[rs1 - 1] : 0;
-end
-
-if(rs2_valid) begin
-    rs2_data <= (rs2 != 0) ? regs[rs2 - 1] : 0;
-end
-
+always @(*) begin
+    rs2_data = (rs2_valid && rs2 != 0) ? regs[rs2 - 1] : 0;
 end
 
 endmodule

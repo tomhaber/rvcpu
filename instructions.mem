@@ -1,21 +1,21 @@
 @0000
 00400113    //  li	sp,4
-00600193    //  li	gp,6
-003100b3    //  add	ra,sp,gp
-40518233    //  sub	tp,gp,t0
-0030a383    //  lw	t2,3(ra)
-0060f3b3    //  and	t2,ra,t1
-001112b3    //  sll	t0,sp,ra
-001122b3    //  slt	t0,sp,ra
-00311463    //  bne	sp,gp,100e0 <l1>
-001132b3    //  sltu	t0,sp,ra
-001142b3    //  xor	t0,sp,ra
-001152b3    //  srl	t0,sp,ra
-401152b3    //  sra	t0,sp,ra
-f17ef2ef    //  jal	t0,2 <_start-0x100b6>
-00110293    //  addi	t0,sp,1
-00312293    //  slti	t0,sp,3
-00517293    //  andi	t0,sp,5
-00211293    //  slli	t0,sp,0x2
-002102e7    //  jalr	t0,2(sp)
-10500073    //  wfi
+// 00600193    //  li	gp,6
+// 003100b3    //  add	ra,sp,gp
+// 40518233    //  sub	tp,gp,t0
+// 0030a383    //  lw	t2,3(ra)
+// 0060f3b3    //  and	t2,ra,t1
+// 001112b3    //  sll	t0,sp,ra
+// 001122b3    //  slt	t0,sp,ra
+// 00311463    //  bne	sp,gp,100e0 <l1>
+// 001132b3    //  sltu	t0,sp,ra
+// 001142b3    //  xor	t0,sp,ra
+// 001152b3    //  srl	t0,sp,ra
+// 401152b3    //  sra	t0,sp,ra
+// f17ef2ef    //  jal	t0,2 <_start-0x100b6>
+// 00110293    //  addi	t0,sp,1
+// 00312293    //  slti	t0,sp,3
+// 00517293    //  andi	t0,sp,5
+// 00211293    //  slli	t0,sp,0x2
+// 002102e7    //  jalr	t0,2(sp)
+// 10500073    //  wfi
