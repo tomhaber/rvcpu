@@ -51,6 +51,7 @@ typedef struct packed {
 } stage_if_t;
 
 typedef struct packed {
+    pc_t pc;
     logic vld_decode;
     logic is_branch;
     logic is_jal;
@@ -63,10 +64,12 @@ typedef struct packed {
 } stage_id_t;
 
 typedef struct packed {
+    pc_t pc;
     data_t res;
 } stage_ex_t;
 
 typedef struct packed {
+    pc_t pc;
     reg_t rd;
     data_t rd_data;
     logic rd_valid;

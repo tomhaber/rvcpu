@@ -43,4 +43,6 @@ mux #(.Inputs(2), .Width(Width)) src_a_mux(
 mux #(.Inputs(2), .Width(Width)) src_b_mux(
   .in({rs2_data, imm}), .sel({rs2_valid, ~rs2_valid}), .out(out.b)
 );
+
+assign out.pc = pc;
 endmodule
