@@ -1,21 +1,21 @@
 @0000
-00400113    //  li	sp,4
-00600193    //  li	gp,6
-003100b3    //  add	ra,sp,gp
-40518233    //  sub	tp,gp,t0
-0030a383    //  lw	t2,3(ra)
-0060f3b3    //  and	t2,ra,t1
-001112b3    //  sll	t0,sp,ra
-001122b3    //  slt	t0,sp,ra
-00311463    //  bne	sp,gp,100e0 <l1>
-001132b3    //  sltu	t0,sp,ra
-001142b3    //  xor	t0,sp,ra
-001152b3    //  srl	t0,sp,ra
-401152b3    //  sra	t0,sp,ra
-f17ef2ef    //  jal	t0,2 <_start-0x100b6>
-00110293    //  addi	t0,sp,1
-00312293    //  slti	t0,sp,3
-00517293    //  andi	t0,sp,5
-00211293    //  slli	t0,sp,0x2
-002102e7    //  jalr	t0,2(sp)
+00400113    //  li	x2,4
+00600193    //  li	x3,6
+003100b3    //  add	x1,x2,x3
+40218233    //  sub	x4,x3,x2
+0030a383    //  lw	t2,3(x1)
+0060f3b3    //  and	t2,x1,t1
+001112b3    //  sll	x5,x2,x1
+001122b3    //  slt	x5,x2,x1
+00311463    //  bne	x2,x3,100e0 <l1>
+001132b3    //  sltu	x5,x2,x1
+001142b3    //  xor	x5,x2,x1
+001152b3    //  srl	x5,x2,x1
+401152b3    //  sx1	x5,x2,x1
+f17ef2ef    //  jal	x5,2 <_start-0x100b6>
+00110293    //  addi	x5,x2,1
+00312293    //  slti	x5,x2,3
+00517293    //  andi	x5,x2,5
+00211293    //  slli	x5,x2,0x2
+002102e7    //  jalr	x5,2(x2)
 10500073    //  wfi

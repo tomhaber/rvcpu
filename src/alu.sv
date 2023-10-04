@@ -16,7 +16,7 @@ logic [$clog2(Width)-1:0] shamt;
 
 always_comb begin
     eff_b = (invert_b) ? ~b : b;
-    sum = a + eff_b + {Width{invert_b}};
+    sum = a + eff_b + {{Width{'0}},invert_b};
     shamt = eff_b[$clog2(Width)-1:0];
 
     case (op)

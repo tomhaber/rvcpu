@@ -5,7 +5,7 @@ module top
    input logic rst);
 
 rvcpu::pc_t address;
-wire logic rs1_valid, rs2_valid, rd_valid;
+wire logic rd_valid;
 
 wire rvcpu::reg_t rs1;
 wire rvcpu::reg_t rs2;
@@ -65,8 +65,8 @@ stage_id stage_id(
 
 regfile #(.Width(Width)) regs (
   .clk(clk), .reset(rst),
-  .rs1(rs1), .rs1_valid(rs1_valid),
-  .rs2(rs2), .rs2_valid(rs2_valid),
+  .rs1(rs1), .rs1_valid('b1),
+  .rs2(rs2), .rs2_valid('b1),
   .rd(rd), .rd_valid(rd_valid), .rd_data(rd_data),
   .rs1_data(rs1_data), .rs2_data(rs2_data)
 );
@@ -114,7 +114,7 @@ flop #(.T(rvcpu::stage_wb_t)) reg_wb (
 
 initial begin
   address = 'h0;
-#50
+#100
   $finish;
 end
 
