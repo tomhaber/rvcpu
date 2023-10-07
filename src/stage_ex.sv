@@ -3,9 +3,11 @@ module stage_ex (
     input rvcpu::pc_t pc,
     input rvcpu::reg_t rd,
     input logic rd_valid,
-    input rvcpu::data_t a,
-    input rvcpu::data_t b,
-    input rvcpu::offset_t offset,
+    input rvcpu::data_t rs1_data,
+    input logic rs1_valid,
+    input rvcpu::data_t rs2_data,
+    input logic rs2_valid,
+    input rvcpu::data_t imm,
     input rvcpu::unit_t unit,
     input rvcpu::operation_t op,
 
@@ -13,21 +15,29 @@ module stage_ex (
 );
 
 wire logic is_alu = unit == rvcpu::unit_alu;
-wire logic is_branch = op[3] & ~is_alu;
-wire logic is_jal = ~op[3] & ~is_alu;
+wire logic is_bru = unit == rvcpu::unit_bru;
+wire logic is_mem = unit == rvcpu::unit_mem;
 
-wire logic invert_b = op[3];
-wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op[2:0]) : rvcpu::alu_add;
+wire logic is_branch = op[3] & is_bru;
+wire logic is_jal = ~op[3] & is_bru;
 
-assign out.rd_valid = rd_valid;
-assign out.rd = rd;
+wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) : rvcpu::alu_add;
 
 wire rvcpu::data_t res;
+wire rvcpu::data_t a, b;
+
+mux2 #(.Width(rvcpu::Width)) src_a_mux(
+  .a(rs1_data), .b(pc), .sel_a(rs1_valid), .out(a)
+);
+
+mux2 #(.Width(rvcpu::Width)) src_b_mux(
+  .a(rs2_data), .b(imm), .sel_a(rs2_valid & is_alu), .out(b)
+);
 
 wire rvcpu::alu_flags_t flags;
 alu #(.Width(rvcpu::Width)) alu(
-  .op(alu_op), .invert_b(invert_b),
-  .a(stage_ex_in.a), .b(stage_ex_in.b), .res(res),
+  .op(alu_op),
+  .a(a), .b(b), .res(res),
   .flags(flags)
 );
 
@@ -44,15 +54,22 @@ bru bru(
   .cmp(cmp),
   .pc(pc),
   .jal_addr(res),
-  .offset(offset),
+  .offset(rvcpu::data2offset(imm)),
 
   .link_addr(link_addr),
   .next_pc(out.pc)
 );
 
-mux2 #(.Width(rvcpu::Width)) next_pc_mux(
-    .a(res), .b(link_addr),
-    .sel_a(is_alu),
-    .out(out.res)
+mux3 #(.Width(rvcpu::Width)) data_mux(
+    .a(res), .b(rs2_data), .c(link_addr),
+    .sel_a(is_alu), .sel_b(is_mem),
+    .out(out.data)
 );
+
+assign out.rd_valid = rd_valid;
+assign out.rd = rd;
+assign out.is_mem = is_mem;
+assign out.op = op;
+assign out.addr = res;
+
 endmodule

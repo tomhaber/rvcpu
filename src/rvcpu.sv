@@ -19,20 +19,22 @@ typedef logic [4:0] reg_t;
 typedef enum [1:0] {
     unit_none = 'b00,
     unit_alu  = 'b01,
-    uni_bru  = 'b10,
+    unit_bru  = 'b10,
     unit_mem  = 'b11
 } unit_t;
 
-typedef enum [2:0] {
-    alu_and   = 'b111,
-    alu_or    = 'b110,
-    alu_xor   = 'b100,
-    alu_add   = 'b000,
-    alu_sll   = 'b001,
-    alu_srl   = 'b101,
-    alu_sra   = 'b011,
-    alu_slt   = 'b010
-    // alu_sltu  = 'b011
+typedef enum [3:0] {
+    alu_and   = 'b0111,
+    alu_or    = 'b0110,
+    alu_xor   = 'b0100,
+    alu_add   = 'b0000,
+    alu_sub   = 'b1000,
+    alu_sll   = 'b0001,
+    alu_srl   = 'b0101,
+    alu_sra   = 'b1011,
+    alu_slt   = 'b0010,
+    alu_sltu  = 'b0011,
+    alu_pass  = 'b1111
 } alu_op_t;
 
 typedef enum [2:0] {
@@ -43,6 +45,14 @@ typedef enum [2:0] {
     bru_ltu  = 'b110,
     bru_geu  = 'b111
 } bru_op_t;
+
+typedef enum [2:0] {
+    mem_b  = 'b000,
+    mem_h  = 'b001,
+    mem_w  = 'b011,
+    mem_bu = 'b100,
+    mem_hu = 'b101
+} mem_op_t;
 
 typedef struct packed {
     logic negative;
@@ -82,18 +92,23 @@ typedef struct packed {
     logic is_wfi;
     unit_t unit;
     operation_t op;
-    data_t a;
-    data_t b;
-    offset_t offset;
+    data_t rs1_data;
+    logic rs1_valid;
+    data_t rs2_data;
+    logic rs2_valid;
+    data_t imm;
     reg_t rd;
     logic rd_valid;
 } stage_id_t;
 
 typedef struct packed {
     pc_t pc;
+    logic is_mem;
+    operation_t op;
     reg_t rd;
     logic rd_valid;
-    data_t res;
+    addr_t addr;
+    data_t data;
 } stage_ex_t;
 
 typedef struct packed {

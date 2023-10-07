@@ -7,7 +7,7 @@ module top (
     output logic halt
 );
 
-rvcpu::pc_t address;
+rvcpu::pc_t pc;
 wire logic rd_valid;
 
 wire rvcpu::reg_t rs1;
@@ -32,7 +32,7 @@ wire rvcpu::pc_t pc_if;
 flop #(.T(rvcpu::pc_t)) reg_pc (
   .clk(clk), .stall(stall_pc), .reset(rst),
   .rstval('b0),
-  .d(address), .q(pc_if));
+  .d(pc), .q(pc_if));
 
 wire logic [Width-1:0] imem_addr;
 wire logic [Width-1:0] imem_data;
@@ -90,9 +90,11 @@ stage_ex stage_ex(
   .pc(stage_ex_in.pc),
   .rd(stage_ex_in.rd),
   .rd_valid(stage_ex_in.rd_valid),
-  .a(stage_ex_in.a),
-  .b(stage_ex_in.b),
-  .offset(stage_ex_in.offset),
+  .rs1_data(stage_ex_in.rs1_data),
+  .rs1_valid(stage_ex_in.rs1_valid),
+  .rs2_data(stage_ex_in.rs2_data),
+  .rs2_valid(stage_ex_in.rs2_valid),
+  .imm(stage_ex_in.imm),
   .unit(stage_ex_in.unit),
   .op(stage_ex_in.op),
   .out(stage_ex_out)
@@ -107,19 +109,46 @@ flop #(.T(rvcpu::stage_ex_t)) reg_ex_mem (
   .q(stage_mem_in)
 );
 
-wire rvcpu::stage_mem_t stage_mem_out = {
-  stage_mem_in.pc,
-  stage_mem_in.rd,
-  stage_mem_in.rd_valid,
-  stage_mem_in.res
-};
-// ram #(.AddrBusWidth(Width), .DataBusWidth(Width)) ram(
-//   .clk(clk), .rst(rst),
-//   .r_addr(stage_mem_in.res),
-//   .w_addr(stage_mem_in.res),
-//   .re('b0), .we('b0),
-//   .w_data(rd_data)
-// );
+wire logic mem_we;
+wire logic mem_re;
+wire rvcpu::addr_t mem_addr;
+wire rvcpu::data_t mem_r_data;
+wire rvcpu::data_t mem_w_data;
+wire logic [3:0] mem_w_sel;
+
+wire rvcpu::stage_mem_t stage_mem_out;
+stage_mem stage_mem(
+  .rst(rst),
+  .pc(stage_mem_in.pc),
+  .rd(stage_mem_in.rd),
+  .rd_valid(stage_mem_in.rd_valid),
+
+  .data(stage_mem_in.data),
+  .addr(stage_mem_in.addr),
+
+  .is_mem(stage_mem_in.is_mem),
+  .op(stage_mem_in.op),
+
+  // ram wiring
+  .mem_addr_o(mem_addr),
+  .mem_re(mem_re),
+  .mem_we(mem_we),
+  .mem_w_sel(mem_w_sel),
+  .mem_data_o(mem_w_data),
+  .mem_data_i(mem_r_data),
+
+  .out(stage_mem_out)
+);
+ram #(.AddrBusWidth(rvcpu::Width), .DataBusWidth(rvcpu::Width)) ram(
+  .clk(clk), .rst(rst),
+  .re(mem_re),
+  .r_addr(mem_addr),
+  .r_data(mem_r_data),
+  .we(mem_we),
+  .w_addr(mem_addr),
+  .w_sel(mem_w_sel),
+  .w_data(mem_w_data)
+);
 
 wire rvcpu::stage_mem_t stage_wb_in;
 flop #(.T(rvcpu::stage_mem_t)) reg_mem_wb(
@@ -132,15 +161,14 @@ flop #(.T(rvcpu::stage_mem_t)) reg_mem_wb(
 flop #(.T(rvcpu::stage_wb_t)) reg_wb (
   .clk(clk), .reset(rst), .stall(stall_wb),
   .rstval('b0),
-  .d({stage_wb_in.pc, stage_ex_in.rd, stage_wb_in.rd_data, stage_ex_in.rd_valid}),
-  .q({address, rd, rd_data, rd_valid})
+  .d({stage_wb_in.pc, stage_wb_in.rd, stage_wb_in.rd_data, stage_wb_in.rd_valid}),
+  .q({pc, rd, rd_data, rd_valid})
 );
 
 initial begin
-  address = 'h0;
+  pc = 'h0;
   halt = 'b0;
-// #100
-//   $finish;
+#200 $finish;
 end
 
 always_ff @( posedge clk ) begin
