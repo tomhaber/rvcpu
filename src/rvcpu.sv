@@ -11,10 +11,17 @@ typedef enum [3:0] {
     jalr_offset = 'b0110,
     br_offset = 'b0111,
     ui_imm = 'b1000,
-    none = 'b0000
+    none_imm = 'b0000
 } imm_type_t;
 
 typedef logic [4:0] reg_t;
+
+typedef enum [1:0] {
+    unit_none = 'b00,
+    unit_alu  = 'b01,
+    uni_bru  = 'b10,
+    unit_mem  = 'b11
+} unit_t;
 
 typedef enum [2:0] {
     alu_and   = 'b111,
@@ -27,6 +34,15 @@ typedef enum [2:0] {
     alu_slt   = 'b010
     // alu_sltu  = 'b011
 } alu_op_t;
+
+typedef enum [2:0] {
+    bru_eq   = 'b000,
+    bru_ne   = 'b001,
+    bru_lt   = 'b100,
+    bru_ge   = 'b101,
+    bru_ltu  = 'b110,
+    bru_geu  = 'b111
+} bru_op_t;
 
 typedef struct packed {
     logic negative;
@@ -44,7 +60,13 @@ typedef struct packed {
 typedef logic [Width-1:0] pc_t;
 typedef logic [Width-1:0] addr_t;
 typedef logic [Width-1:0] data_t;
+typedef logic [13:0] offset_t;
 typedef logic [31:0] opcode_t;
+typedef logic [3:0] operation_t;
+
+function offset_t data2offset(data_t d);
+    return d[13:0];
+endfunction
 
 typedef struct packed {
     pc_t pc;
@@ -54,20 +76,29 @@ typedef struct packed {
 typedef struct packed {
     pc_t pc;
     logic vld_decode;
-    logic is_branch;
-    logic is_jal;
     logic is_wfi;
-    logic[3:0] aluop;
+    unit_t unit;
+    operation_t op;
     data_t a;
     data_t b;
+    offset_t offset;
     reg_t rd;
     logic rd_valid;
 } stage_id_t;
 
 typedef struct packed {
     pc_t pc;
+    reg_t rd;
+    logic rd_valid;
     data_t res;
 } stage_ex_t;
+
+typedef struct packed {
+    pc_t pc;
+    reg_t rd;
+    logic rd_valid;
+    data_t rd_data;
+} stage_mem_t;
 
 typedef struct packed {
     pc_t pc;

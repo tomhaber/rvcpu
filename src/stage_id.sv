@@ -24,25 +24,26 @@ decoder dec(
     .opcode(opcode),
     .rs1_valid(rs1_valid), .rs2_valid(rs2_valid),
     .rd_valid(out.rd_valid),
-    .aluop(out.aluop), .imm(immtype),
+    .imm(immtype),
     .vld_decode(out.vld_decode),
-    .is_branch(out.is_branch),
-    .is_jal(out.is_jal),
+    .unit(out.unit),
+    .op(out.op),
     .is_wfi(out.is_wfi)
 );
 
 wire [Width-1:0] imm;
-gen_imm #(.Width(Width)) genimm (
+gen_imm #(.Width(rvcpu::Width)) genimm (
     .op(opcode), .imm(imm), .immtype(immtype)
 );
 
-mux #(.Inputs(2), .Width(Width)) src_a_mux(
-  .in({rs1_data, pc}), .sel({rs1_valid, ~rs1_valid}), .out(out.a)
+mux2 #(.Width(rvcpu::Width)) src_a_mux(
+  .a(rs1_data), .b(pc), .sel_a(rs1_valid), .out(out.a)
 );
 
-mux #(.Inputs(2), .Width(Width)) src_b_mux(
-  .in({rs2_data, imm}), .sel({rs2_valid, ~rs2_valid}), .out(out.b)
+mux2 #(.Width(rvcpu::Width)) src_b_mux(
+  .a(rs2_data), .b(imm), .sel_a(rs2_valid), .out(out.b)
 );
 
 assign out.pc = pc;
+assign out.offset = rvcpu::data2offset(imm);
 endmodule

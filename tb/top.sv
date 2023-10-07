@@ -1,8 +1,11 @@
 localparam Width = rvcpu::Width;
 
-module top
-  (input logic clk,
-   input logic rst);
+module top (
+    input logic clk,
+    input logic rst,
+
+    output logic halt
+);
 
 rvcpu::pc_t address;
 wire logic rd_valid;
@@ -17,6 +20,7 @@ wire logic stall_pc, stall_if, stall_id, stall_ex, stall_mem, stall_wb;
 wire logic stallreq_id;
 control ctrl(
   .clk(clk), .rst(rst),
+  .halt(halt),
   .stallreq_if('b0),
   .stallreq_id(stallreq_id),
   .stallreq_ex('b0),
@@ -71,6 +75,8 @@ regfile #(.Width(Width)) regs (
   .rs1_data(rs1_data), .rs2_data(rs2_data)
 );
 
+assign halt = stage_id_out.is_wfi;
+
 wire rvcpu::stage_id_t stage_ex_in;
 flop #(.T(rvcpu::stage_id_t)) reg_id_ex(
   .clk(clk), .stall(stall_id), .reset(rst),
@@ -78,48 +84,67 @@ flop #(.T(rvcpu::stage_id_t)) reg_id_ex(
   .d(stage_id_out), .q(stage_ex_in)
 );
 
+wire rvcpu::stage_ex_t stage_ex_out;
+stage_ex stage_ex(
+  .rst(rst),
+  .pc(stage_ex_in.pc),
+  .rd(stage_ex_in.rd),
+  .rd_valid(stage_ex_in.rd_valid),
+  .a(stage_ex_in.a),
+  .b(stage_ex_in.b),
+  .offset(stage_ex_in.offset),
+  .unit(stage_ex_in.unit),
+  .op(stage_ex_in.op),
+  .out(stage_ex_out)
+);
+
 wire rvcpu::data_t res;
-alu #(.Width(Width)) alu(
-  .op(stage_ex_in.aluop[2:0]), .invert_b(stage_ex_in.aluop[3]),
-  .a(stage_ex_in.a), .b(stage_ex_in.b), .res(res),
-  .flags(flags)
-);
-
-wire rvcpu::cmp_t cmp;
-comparator compa(
-  .flags(flags), .cmp(cmp)
-);
-
-wire rvcpu::stage_ex_t stage_wb_in;
-flop #(.T(rvcpu::stage_ex_t)) reg_ex_wb (
+wire rvcpu::stage_ex_t stage_mem_in;
+flop #(.T(rvcpu::stage_ex_t)) reg_ex_mem (
   .clk(clk), .reset(rst), .stall(stall_ex),
   .rstval('b0),
-  .d({stage_ex_in.pc, res}),
-  .q(stage_wb_in)
+  .d(stage_ex_out),
+  .q(stage_mem_in)
 );
 
-// bru #(.Width(Width)) bru(
-//   .is_branch(stage_ex_in.is_branch),
-//   .is_jal(stage_ex_in.is_jal),
-//   .pc(stage_if_in.is_jal),
+wire rvcpu::stage_mem_t stage_mem_out = {
+  stage_mem_in.pc,
+  stage_mem_in.rd,
+  stage_mem_in.rd_valid,
+  stage_mem_in.res
+};
+// ram #(.AddrBusWidth(Width), .DataBusWidth(Width)) ram(
+//   .clk(clk), .rst(rst),
+//   .r_addr(stage_mem_in.res),
+//   .w_addr(stage_mem_in.res),
+//   .re('b0), .we('b0),
+//   .w_data(rd_data)
 // );
-wire rvcpu::pc_t next_pc = stage_wb_in.pc + 'b100;
+
+wire rvcpu::stage_mem_t stage_wb_in;
+flop #(.T(rvcpu::stage_mem_t)) reg_mem_wb(
+  .clk(clk), .reset(rst), .stall(stall_mem),
+  .rstval('b0),
+  .d(stage_mem_out),
+  .q(stage_wb_in)
+);
 
 flop #(.T(rvcpu::stage_wb_t)) reg_wb (
   .clk(clk), .reset(rst), .stall(stall_wb),
   .rstval('b0),
-  .d({next_pc, stage_ex_in.rd, stage_wb_in.res, stage_ex_in.rd_valid}),
+  .d({stage_wb_in.pc, stage_ex_in.rd, stage_wb_in.rd_data, stage_ex_in.rd_valid}),
   .q({address, rd, rd_data, rd_valid})
 );
 
 initial begin
   address = 'h0;
-#100
-  $finish;
+  halt = 'b0;
+// #100
+//   $finish;
 end
 
 always_ff @( posedge clk ) begin
-    // address <= address + 4;
+    if(!rst && halt) $finish;
 end
 
 /*
