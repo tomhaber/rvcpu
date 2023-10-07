@@ -51,7 +51,7 @@ stage_if stage_if(
 wire rvcpu::stage_if_t stage_id_in;
 flop #(.T(rvcpu::stage_if_t)) reg_if_id(
   .clk(clk), .stall(stall_if), .reset(rst),
-  .rstval('b0),
+  .rstval({rvcpu::RESET_PC, rvcpu::NOP}),
   .d(stage_if_out), .q(stage_id_in)
 );
 
@@ -67,6 +67,8 @@ stage_id stage_id(
   .out(stage_id_out)
 );
 
+assign halt = |{stage_id_out.is_wfi, ~stage_id_out.vld_decode};
+
 regfile #(.Width(Width)) regs (
   .clk(clk), .reset(rst),
   .rs1(rs1), .rs1_valid('b1),
@@ -74,8 +76,6 @@ regfile #(.Width(Width)) regs (
   .rd(rd), .rd_valid(rd_valid), .rd_data(rd_data),
   .rs1_data(rs1_data), .rs2_data(rs2_data)
 );
-
-assign halt = stage_id_out.is_wfi;
 
 wire rvcpu::stage_id_t stage_ex_in;
 flop #(.T(rvcpu::stage_id_t)) reg_id_ex(

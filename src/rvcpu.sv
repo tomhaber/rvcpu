@@ -64,6 +64,9 @@ typedef logic [13:0] offset_t;
 typedef logic [31:0] opcode_t;
 typedef logic [3:0] operation_t;
 
+const opcode_t RESET_PC = 'h00000000;
+const opcode_t NOP = 'h00000013;
+
 function offset_t data2offset(data_t d);
     return d[13:0];
 endfunction
