@@ -38,6 +38,7 @@ typedef struct packed {
 typedef struct packed {
     logic equal;
     logic less_than;
+    logic less_than_unsigned;
 } cmp_t;
 
 typedef logic [Width-1:0] pc_t;

@@ -87,7 +87,7 @@ alu #(.Width(Width)) alu(
 
 wire rvcpu::cmp_t cmp;
 comparator compa(
-  .flags(flags), .is_unsigned('b0), .cmp(cmp)
+  .flags(flags), .cmp(cmp)
 );
 
 wire rvcpu::stage_ex_t stage_wb_in;
