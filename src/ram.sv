@@ -1,6 +1,7 @@
 module ram #(
     parameter AddrBusWidth = 32,
-    parameter DataBusWidth = 32
+    parameter DataBusWidth = 32,
+    parameter MemSizeBytes = (1<<(AddrBusWidth)
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -13,7 +14,15 @@ module ram #(
     output reg  [DataBusWidth-1:0] r_data
 );
 
-reg [DataBusWidth-1:0] data[(1<<AddrBusWidth)-1:0];
+localparam WordSizeBits = DataBusWidth - 3;
+localparam MemSizeWords = MemSizeBytes / (DataBusWidth/8);
+reg [DataBusWidth-1:0] data[MemSizeWords -1:0];
+
+initial begin
+    for(integer index = 0; index < MemSizeWords; index = index + 1) begin
+        data[index] = $random;
+    end
+end
 
 always @ (posedge clk) begin
     if (!rst && we) begin
@@ -28,7 +37,7 @@ always @ (posedge clk) begin
     if (rst) begin
         r_data <= 0;
     end else if (re) begin
-        r_data <= data[r_addr];
+        r_data <= data[r_addr[($clog2(MemSize)+WordSizeBits-1):WordSizeBits]];
     end else begin
         r_data <= 0;
     end
