@@ -19,6 +19,9 @@ wire logic is_jal = ~op[3] & ~is_alu;
 wire logic invert_b = op[3];
 wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op[2:0]) : rvcpu::alu_add;
 
+assign out.rd_valid = rd_valid;
+assign out.rd = rd;
+
 wire rvcpu::data_t res;
 
 wire rvcpu::alu_flags_t flags;
