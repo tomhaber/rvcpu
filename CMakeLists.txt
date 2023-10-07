@@ -8,6 +8,10 @@ if (NOT verilator_FOUND)
   message(FATAL_ERROR "Verilator was not found. Either install it, or set the VERILATOR_ROOT environment variable")
 endif()
 
+find_package(fmt)
+
+add_subdirectory(riscv_iss)
+
 # Create a new executable target that will contain all your sources
 add_executable(tb tb/sim_main.cpp)
 
