@@ -17,10 +17,12 @@ l1:
 	xor x5, x2, x1
 	srl x5, x2, x1
 	sra x5, x2, x1
-	jal x5, 2
+	jal l2
+	wfi
+l2:
 	addi x5, x2, 1
 	slti x5, x2, 3
 	andi x5, x2, 5
 	slli x5, x2, 2
 	jalr x5, x2, 2
-	wfi
+	ret
