@@ -42,13 +42,14 @@ always @ (posedge clk) begin
     end
 end
 
-always @ (posedge clk) begin
+// always @ (posedge clk) begin
+always @(*) begin
     if (rst) begin
-        r_data <= 0;
+        r_data = 0;
     end else if (re) begin
-        r_data <= data[r_a];
+        r_data = data[r_a];
     end else begin
-        r_data <= 0;
+        r_data = 0;
     end
 end
 
