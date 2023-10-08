@@ -21,7 +21,7 @@ wire logic is_mem = unit == rvcpu::unit_mem;
 wire logic is_branch = op[3] & is_bru;
 wire logic is_jal = ~op[3] & is_bru;
 
-wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) : rvcpu::alu_add;
+wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) : rvcpu::alu_sub;
 
 wire rvcpu::data_t res;
 wire rvcpu::data_t a, b;
@@ -31,7 +31,7 @@ mux2 #(.Width(rvcpu::Width)) src_a_mux(
 );
 
 mux2 #(.Width(rvcpu::Width)) src_b_mux(
-  .a(rs2_data), .b(imm), .sel_a(rs2_valid & is_alu), .out(b)
+  .a(rs2_data), .b(imm), .sel_a(rs2_valid & ~is_mem), .out(b)
 );
 
 wire rvcpu::alu_flags_t flags;
