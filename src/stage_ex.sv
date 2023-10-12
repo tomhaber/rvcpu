@@ -13,6 +13,7 @@ module stage_ex (
 
     output logic br_sel,
     output rvcpu::pc_t pc_br,
+    output logic stallreq,
     output rvcpu::stage_ex_t out
 );
 
@@ -22,6 +23,8 @@ wire logic is_mem = unit == rvcpu::unit_mem;
 
 wire logic is_branch = op[3] & is_bru;
 wire logic is_jal = ~op[3] & is_bru;
+
+assign stallreq = 1'b0;
 
 wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) :
                         (is_branch ? rvcpu::alu_sub : rvcpu::alu_add);

@@ -5,7 +5,9 @@ module instruction_memory #(
     input logic clk,
     input logic [Width-1:0] address,
     input logic valid,
-    output logic [Width-1:0] data
+    output logic [Width-1:0] data,
+    output logic ready,
+    output logic done
 );
 
 localparam WordSizeBits = $clog2(Width) - 3;
@@ -21,10 +23,14 @@ initial begin
 end
 
 always @(*) begin
+    ready = 0'b1;
+
     if(valid) begin
         data = mem[address[($clog2(MemSize)+WordSizeBits-1):WordSizeBits]];
+        done = 1'b1;
     end else begin
         data = 0;
+        done = 1'b0;
     end
 end
 

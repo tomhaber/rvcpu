@@ -8,6 +8,7 @@ module stage_id (
     output rvcpu::reg_t rs1,
     output rvcpu::reg_t rs2,
 
+    output logic stallreq,
     output rvcpu::stage_id_t out
 );
 
@@ -33,6 +34,7 @@ gen_imm #(.Width(rvcpu::Width)) genimm (
     .op(opcode), .imm(imm), .immtype(immtype)
 );
 
+assign stallreq = 1'b0;
 assign out.pc = pc;
 assign out.imm = imm;
 assign out.rs1_data = rs1_data;

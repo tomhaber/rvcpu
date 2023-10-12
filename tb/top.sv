@@ -16,14 +16,14 @@ wire rvcpu::data_t rd_data;
 wire rvcpu::alu_flags_t flags;
 
 wire logic stall_pc, stall_if, stall_id, stall_ex, stall_mem, stall_wb;
-wire logic stallreq_id;
+wire logic stallreq_if, stallreq_id, stallreq_ex, stallreq_mem;
 control ctrl(
   .clk(clk), .rst(rst),
   .halt(halt),
-  .stallreq_if('b0),
+  .stallreq_if(stallreq_if),
   .stallreq_id(stallreq_id),
-  .stallreq_ex('b0),
-  .stallreq_mem('b0),
+  .stallreq_ex(stallreq_ex),
+  .stallreq_mem(stallreq_mem),
   .stall({stall_wb, stall_mem, stall_ex, stall_id, stall_if, stall_pc})
 );
 
@@ -46,16 +46,20 @@ flop #(.T(rvcpu::pc_t)) reg_pc (
 
 wire logic [Width-1:0] imem_addr;
 wire logic [Width-1:0] imem_data;
-wire logic imem_valid;
+wire logic imem_valid, imem_ready, imem_done;
 
 instruction_memory #(.Width(Width)) imem(
-  .clk(clk), .address(imem_addr), .valid(imem_valid), .data(imem_data));
+  .clk(clk), .address(imem_addr),
+  .valid(imem_valid), .data(imem_data),
+  .ready(imem_ready), .done(imem_done)
+);
 
 wire rvcpu::stage_if_t stage_if_out;
 stage_if stage_if(
   .rst(rst), .pc_i(pc_if), .mem_data(imem_data),
   .mem_valid(imem_valid), .mem_addr(imem_addr),
-  .out(stage_if_out)
+  .mem_ready(imem_ready), .mem_done(imem_done),
+  .stallreq(stallreq_if), .out(stage_if_out)
 );
 
 wire rvcpu::stage_if_t stage_id_in;
@@ -74,7 +78,7 @@ stage_id stage_id(
   .pc(stage_id_in.pc), .opcode(stage_id_in.opcode),
   .rs1_data(rs1_data), .rs2_data(rs2_data),
   .rs1(rs1), .rs2(rs2),
-  .out(stage_id_out)
+  .stallreq(stallreq_id), .out(stage_id_out)
 );
 
 assign halt = |{stage_id_out.is_wfi, ~stage_id_out.vld_decode};
@@ -110,6 +114,8 @@ stage_ex stage_ex(
 
   .br_sel(br_sel),
   .pc_br(pc_br),
+
+  .stallreq(stallreq_ex),
   .out(stage_ex_out)
 );
 
@@ -149,6 +155,7 @@ stage_mem stage_mem(
   .mem_data_o(mem_w_data),
   .mem_data_i(mem_r_data),
 
+  .stallreq(stallreq_mem),
   .out(stage_mem_out)
 );
 ram #(.AddrBusWidth(rvcpu::Width), .DataBusWidth(rvcpu::Width)) ram(

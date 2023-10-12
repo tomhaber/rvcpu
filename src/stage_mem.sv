@@ -10,6 +10,7 @@ module stage_mem (
     input logic is_mem,
     input rvcpu::operation_t op,
 
+    output logic stallreq,
     output rvcpu::stage_mem_t out,
 
     // memory interface
@@ -21,6 +22,8 @@ module stage_mem (
     output logic [3:0] mem_w_sel,
     output rvcpu::data_t mem_data_o
 );
+
+assign stallreq = 1'b0;
 
 assign mem_we = is_mem & op[3];
 assign mem_re = is_mem & ~op[3];
