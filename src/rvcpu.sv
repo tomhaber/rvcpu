@@ -102,7 +102,6 @@ typedef struct packed {
 } stage_id_t;
 
 typedef struct packed {
-    pc_t pc;
     logic is_mem;
     operation_t op;
     reg_t rd;
@@ -112,17 +111,9 @@ typedef struct packed {
 } stage_ex_t;
 
 typedef struct packed {
-    pc_t pc;
     reg_t rd;
     logic rd_valid;
     data_t rd_data;
 } stage_mem_t;
-
-typedef struct packed {
-    pc_t pc;
-    reg_t rd;
-    data_t rd_data;
-    logic rd_valid;
-} stage_wb_t;
 
 endpackage : rvcpu

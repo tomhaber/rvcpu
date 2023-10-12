@@ -11,6 +11,8 @@ module stage_ex (
     input rvcpu::unit_t unit,
     input rvcpu::operation_t op,
 
+    output logic br_sel,
+    output rvcpu::pc_t pc_br,
     output rvcpu::stage_ex_t out
 );
 
@@ -21,7 +23,8 @@ wire logic is_mem = unit == rvcpu::unit_mem;
 wire logic is_branch = op[3] & is_bru;
 wire logic is_jal = ~op[3] & is_bru;
 
-wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) : rvcpu::alu_sub;
+wire rvcpu::alu_op_t alu_op = is_alu ? rvcpu::alu_op_t'(op) :
+                        (is_branch ? rvcpu::alu_sub : rvcpu::alu_add);
 
 wire rvcpu::data_t res;
 wire rvcpu::data_t a, b;
@@ -57,7 +60,8 @@ bru bru(
   .offset(rvcpu::data2offset(imm)),
 
   .link_addr(link_addr),
-  .next_pc(out.pc)
+  .br_sel(br_sel),
+  .pc_br(pc_br)
 );
 
 mux3 #(.Width(rvcpu::Width)) data_mux(

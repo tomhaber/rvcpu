@@ -12,8 +12,8 @@ localparam WordSizeBits = $clog2(Width) - 3;
 reg [Width-1:0] mem[MemSize - 1:0];
 
 initial begin
-    //$readmemh("instructions.mem", mem);
-    $readmemh("ldst.mem", mem);
+    $readmemh("instructions.mem", mem);
+    // $readmemh("ldst.mem", mem);
 
     // for(integer index = 0; index < 60; index = index + 1) begin
     //     $display("value at %d = %h", index, mem[index]);

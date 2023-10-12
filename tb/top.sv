@@ -7,7 +7,6 @@ module top (
     output logic halt
 );
 
-rvcpu::pc_t pc;
 wire logic rd_valid;
 
 wire rvcpu::reg_t rs1;
@@ -29,10 +28,21 @@ control ctrl(
 );
 
 wire rvcpu::pc_t pc_if;
+wire rvcpu::pc_t pc_br;
+wire logic br_sel;
+wire rvcpu::pc_t pc_plus_4 = pc_if + 'b100;
+wire rvcpu::pc_t pc_next;
+
+mux2 #(.Width(rvcpu::Width)) pc_mux(
+    .a(pc_br), .b(pc_plus_4),
+    .sel_a(br_sel),
+    .out(pc_next)
+);
+
 flop #(.T(rvcpu::pc_t)) reg_pc (
   .clk(clk), .stall(stall_pc), .reset(rst),
   .rstval('b0),
-  .d(pc), .q(pc_if));
+  .d(pc_next), .q(pc_if));
 
 wire logic [Width-1:0] imem_addr;
 wire logic [Width-1:0] imem_data;
@@ -97,6 +107,9 @@ stage_ex stage_ex(
   .imm(stage_ex_in.imm),
   .unit(stage_ex_in.unit),
   .op(stage_ex_in.op),
+
+  .br_sel(br_sel),
+  .pc_br(pc_br),
   .out(stage_ex_out)
 );
 
@@ -106,7 +119,7 @@ flop #(.T(rvcpu::stage_ex_t)) reg_ex_mem (
   .clk(clk), .reset(rst), .stall(stall_ex),
   .rstval('b0),
   .d(stage_ex_out),
-  .q(stage_mem_in)
+  .q({stage_mem_in})
 );
 
 wire logic mem_we;
@@ -119,7 +132,6 @@ wire logic [3:0] mem_w_sel;
 wire rvcpu::stage_mem_t stage_mem_out;
 stage_mem stage_mem(
   .rst(rst),
-  .pc(stage_mem_in.pc),
   .rd(stage_mem_in.rd),
   .rd_valid(stage_mem_in.rd_valid),
 
@@ -155,18 +167,10 @@ flop #(.T(rvcpu::stage_mem_t)) reg_mem_wb(
   .clk(clk), .reset(rst), .stall(stall_mem),
   .rstval('b0),
   .d(stage_mem_out),
-  .q(stage_wb_in)
-);
-
-flop #(.T(rvcpu::stage_wb_t)) reg_wb (
-  .clk(clk), .reset(rst), .stall(stall_wb),
-  .rstval('b0),
-  .d({stage_wb_in.pc, stage_wb_in.rd, stage_wb_in.rd_data, stage_wb_in.rd_valid}),
-  .q({pc, rd, rd_data, rd_valid})
+  .q({rd, rd_valid, rd_data})
 );
 
 initial begin
-  pc = 'h0;
   halt = 'b0;
 #200 $finish;
 end

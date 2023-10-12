@@ -11,7 +11,8 @@ module bru (
     input rvcpu::offset_t offset,
 
     output rvcpu::pc_t link_addr,
-    output rvcpu::pc_t next_pc
+    output logic br_sel,
+    output rvcpu::pc_t pc_br
 );
 
 logic do_branch;
@@ -28,21 +29,16 @@ always_comb begin
     endcase
 end
 
-wire rvcpu::pc_t pc_plus_4 = pc + 'b100;
 wire rvcpu::pc_t pc_plus_offset = pc + {{(Width-14){1'b0}}, offset};
 
+wire rvcpu::pc_t pc_plus_4 = pc + 'b100;
 assign link_addr = pc_plus_4;
 
-wire rvcpu::pc_t br_addr;
-mux2 #(.Width(rvcpu::Width)) br_mux(
-    .a(pc_plus_offset), .b(pc_plus_4),
-    .sel_a(is_branch & do_branch),
-    .out(br_addr)
-);
+assign br_sel = (is_branch & do_branch) | is_jal;
 
 mux2 #(.Width(rvcpu::Width)) next_pc_mux(
-    .a(jal_addr), .b(br_addr),
+    .a(jal_addr), .b(pc_plus_offset),
     .sel_a(is_jal),
-    .out(next_pc)
+    .out(pc_br)
 );
 endmodule

@@ -1,8 +1,6 @@
 module stage_mem (
     input wire rst,
 
-    input rvcpu::pc_t pc,
-
     input rvcpu::reg_t rd,
     input logic rd_valid,
 
@@ -30,7 +28,6 @@ assign mem_re = is_mem & ~op[3];
 assign mem_addr_o = addr;
 assign mem_data_o = data;
 
-assign out.pc = pc;
 assign out.rd = rd;
 assign out.rd_valid = rd_valid;
 
