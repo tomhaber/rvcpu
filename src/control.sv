@@ -9,17 +9,21 @@ module control (
     output logic [5:0] stall // {WB, MEM, EX, ID, IF, PC}
 );
 
-wire any_stallreq = |{stallreq_if,stallreq_id,stallreq_ex,stallreq_mem};
-
-reg [5:0] ctrl;
-always_ff @(posedge clk) begin
+always @ (*) begin
     if(rst) begin
-        stall <= 6'b000000;
-        ctrl <= 6'b111101;
-    end else if(!any_stallreq) begin
-        stall <= ctrl;
-        ctrl <= (ctrl << 1) | (ctrl >> ($bits(ctrl) - 1));
+        stall = 6'b000000;
+    end else if (halt) begin
+        stall = 6'b111111;
+    end else if (stallreq_mem) begin
+        stall = 6'b011111;
+    end else if (stallreq_ex) begin
+        stall = 6'b001111;
+    end else if (stallreq_id) begin
+        stall = 6'b000111;
+    end else if (stallreq_if) begin
+        stall = 6'b000011;
+    end else begin
+        stall = 6'b000000;
     end
 end
-
 endmodule

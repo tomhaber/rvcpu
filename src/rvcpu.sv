@@ -74,9 +74,6 @@ typedef logic [13:0] offset_t;
 typedef logic [31:0] opcode_t;
 typedef logic [3:0] operation_t;
 
-const opcode_t RESET_PC = 'h00000000;
-const opcode_t NOP = 'h00000013;
-
 function offset_t data2offset(data_t d);
     return d[13:0];
 endfunction
@@ -85,6 +82,8 @@ typedef struct packed {
     pc_t pc;
     opcode_t opcode;
 } stage_if_t;
+
+const stage_if_t RESET_IF = stage_if_t'{'h00000000, 'h00000013};
 
 typedef struct packed {
     pc_t pc;
@@ -101,6 +100,21 @@ typedef struct packed {
     logic rd_valid;
 } stage_id_t;
 
+const stage_id_t RESET_ID = stage_id_t'{
+    'h00000000,
+    1'b1,
+    1'b0,
+    unit_alu,
+    alu_add,
+    '0,
+    1'b1,
+    '0,
+    1'b1,
+    '0,
+    5'b00000,
+    1'b0
+};
+
 typedef struct packed {
     logic is_mem;
     operation_t op;
@@ -110,10 +124,26 @@ typedef struct packed {
     data_t data;
 } stage_ex_t;
 
+const stage_ex_t RESET_EX = stage_ex_t'{
+    1'b0,
+    alu_add,
+    5'b00000,
+    1'b0,
+    '0,
+    '0
+};
+
 typedef struct packed {
     reg_t rd;
     logic rd_valid;
     data_t rd_data;
 } stage_mem_t;
+
+const stage_mem_t RESET_MEM = stage_mem_t'{
+    5'b00000,
+    1'b0,
+    '0
+};
+
 
 endpackage : rvcpu

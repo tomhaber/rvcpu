@@ -24,11 +24,13 @@ wire rvcpu::alu_flags_t flags;
 
 wire logic stall_pc, stall_if, stall_id, stall_ex, stall_mem, stall_wb;
 wire logic stallreq_if, stallreq_id, stallreq_ex, stallreq_mem;
+wire logic dep_found;
+
 control ctrl(
   .clk(clk), .rst(rst),
   .halt(halted),
   .stallreq_if(stallreq_if),
-  .stallreq_id(stallreq_id),
+  .stallreq_id(stallreq_id | dep_found),
   .stallreq_ex(stallreq_ex),
   .stallreq_mem(stallreq_mem),
   .stall({stall_wb, stall_mem, stall_ex, stall_id, stall_if, stall_pc})
@@ -64,8 +66,8 @@ stage_if stage_if(
 
 wire rvcpu::stage_if_t stage_id_in;
 flop #(.T(rvcpu::stage_if_t)) reg_if_id(
-  .clk(clk), .stall(stall_if), .reset(rst),
-  .rstval({rvcpu::RESET_PC, rvcpu::NOP}),
+  .clk(clk), .stall(stall_if), .reset(rst | stallreq_if),
+  .rstval(rvcpu::RESET_IF),
   .d(stage_if_out), .q(stage_id_in)
 );
 
@@ -81,8 +83,6 @@ stage_id stage_id(
   .stallreq(stallreq_id), .out(stage_id_out)
 );
 
-assign halted = |{stage_id_out.is_wfi, ~stage_id_out.vld_decode};
-
 regfile #(.Width(Width)) regs (
   .clk(clk), .reset(rst),
   .rs1(rs1), .rs1_valid('b1),
@@ -93,10 +93,12 @@ regfile #(.Width(Width)) regs (
 
 wire rvcpu::stage_id_t stage_ex_in;
 flop #(.T(rvcpu::stage_id_t)) reg_id_ex(
-  .clk(clk), .stall(stall_id), .reset(rst),
-  .rstval('b0),
+  .clk(clk), .stall(stall_id), .reset(rst | stallreq_id | dep_found),
+  .rstval(rvcpu::RESET_ID),
   .d(stage_id_out), .q(stage_ex_in)
 );
+
+assign halted = |{stage_ex_in.is_wfi, ~stage_ex_in.vld_decode};
 
 wire rvcpu::stage_ex_t stage_ex_out;
 stage_ex stage_ex(
@@ -122,8 +124,8 @@ stage_ex stage_ex(
 wire rvcpu::data_t res;
 wire rvcpu::stage_ex_t stage_mem_in;
 flop #(.T(rvcpu::stage_ex_t)) reg_ex_mem (
-  .clk(clk), .reset(rst), .stall(stall_ex),
-  .rstval('b0),
+  .clk(clk), .reset(rst | stallreq_ex), .stall(stall_ex),
+  .rstval(rvcpu::RESET_EX),
   .d(stage_ex_out),
   .q({stage_mem_in})
 );
@@ -154,10 +156,23 @@ stage_mem stage_mem(
 
 wire rvcpu::stage_mem_t stage_wb_in;
 flop #(.T(rvcpu::stage_mem_t)) reg_mem_wb(
-  .clk(clk), .reset(rst), .stall(stall_mem),
-  .rstval('b0),
+  .clk(clk), .reset(rst | stallreq_mem), .stall(stall_mem),
+  .rstval(rvcpu::RESET_MEM),
   .d(stage_mem_out),
-  .q({rd, rd_valid, rd_data})
+  .q(stage_wb_in)
 );
+
+dependency_unit depunit(
+    .rs1(rs1), .rs1_valid(stage_id_out.rs1_valid),
+    .rs2(rs2), .rs2_valid(stage_id_out.rs2_valid),
+    .rd_ex(stage_ex_out.rd), .rd_ex_vld(stage_ex_out.rd_valid),
+    .rd_mem(stage_mem_out.rd), .rd_mem_vld(stage_mem_out.rd_valid),
+    .rd_wb(stage_wb_in.rd), .rd_wb_vld(stage_wb_in.rd_valid),
+    .dep_found(dep_found)
+);
+
+assign rd = stage_wb_in.rd;
+assign rd_valid = stage_wb_in.rd_valid;
+assign rd_data = stage_wb_in.rd_data;
 
 endmodule
