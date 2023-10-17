@@ -3,8 +3,10 @@ localparam Width = rvcpu::Width;
 module top (
     input logic clk,
     input logic rst,
+    input logic irq,
 
-    output logic halted
+    output logic exception,
+    output logic wfi
 );
 
 wire logic [Width-1:0] imem_addr;
@@ -45,7 +47,8 @@ riscv_core core(
   .mem_r_data(mem_r_data),
   .mem_w_mask(mem_w_mask),
   .mem_re(mem_re), .mem_we(mem_we),
-  .halted(halted)
+  .exception(exception),
+  .irq(irq), .wfi(wfi)
 );
 
 initial begin
@@ -53,7 +56,8 @@ initial begin
 end
 
 always_ff @( posedge clk ) begin
-    if(!rst && halted) $finish;
+    if(!rst & wfi)  $finish;
+    if(!rst & exception)  $stop;
 end
 
 /*

@@ -6,12 +6,14 @@ module riscv_core(
    output logic [3:0] mem_w_mask,
    output logic mem_we,
    output logic mem_re,
-   output logic halted,
+   output logic exception,
+   output logic wfi,
 
    input logic clk,
    input logic rst,
    input rvcpu::opcode_t imem_data,
-   input rvcpu::data_t mem_r_data
+   input rvcpu::data_t mem_r_data,
+   input logic irq
 );
 
 wire logic rd_valid;
@@ -28,7 +30,7 @@ wire logic dep_found;
 
 control ctrl(
   .clk(clk), .rst(rst),
-  .halt(halted),
+  .halt(exception),
   .stallreq_if(stallreq_if),
   .stallreq_id(stallreq_id | dep_found),
   .stallreq_ex(stallreq_ex),
@@ -66,7 +68,7 @@ stage_if stage_if(
 
 wire rvcpu::stage_if_t stage_id_in;
 flop #(.T(rvcpu::stage_if_t)) reg_if_id(
-  .clk(clk), .stall(stall_if), .reset(rst | stallreq_if),
+  .clk(clk), .stall(stall_if), .reset(rst | stallreq_if | br_sel),
   .rstval(rvcpu::RESET_IF),
   .d(stage_if_out), .q(stage_id_in)
 );
@@ -93,12 +95,14 @@ regfile #(.Width(Width)) regs (
 
 wire rvcpu::stage_id_t stage_ex_in;
 flop #(.T(rvcpu::stage_id_t)) reg_id_ex(
-  .clk(clk), .stall(stall_id), .reset(rst | stallreq_id | dep_found),
+  .clk(clk), .stall(stall_id), .reset(rst | stallreq_id | dep_found | br_sel),
   .rstval(rvcpu::RESET_ID),
   .d(stage_id_out), .q(stage_ex_in)
 );
 
-assign halted = |{stage_ex_in.is_wfi, ~stage_ex_in.vld_decode};
+assign exception = ~stage_ex_in.vld_decode;
+assign stallreq_ex = stage_ex_in.is_wfi & ~irq;
+assign wfi = stage_ex_in.is_wfi;
 
 wire rvcpu::stage_ex_t stage_ex_out;
 stage_ex stage_ex(
@@ -117,7 +121,6 @@ stage_ex stage_ex(
   .br_sel(br_sel),
   .pc_br(pc_br),
 
-  .stallreq(stallreq_ex),
   .out(stage_ex_out)
 );
 
