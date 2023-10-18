@@ -14,6 +14,7 @@ add_subdirectory(riscv_iss)
 
 # Create a new executable target that will contain all your sources
 add_executable(tb tb/sim_main.cpp)
+target_link_libraries(tb PRIVATE riscv_iss)
 
 # Add the Verilated circuit to the target
 verilate(tb TRACE
@@ -22,3 +23,14 @@ verilate(tb TRACE
   PREFIX Vtop
   SOURCES src/rvcpu.sv tb/top.sv
 )
+
+add_executable(cache_sim tb/cache_sim.cpp)
+
+# Add the Verilated circuit to the target
+verilate(cache_sim TRACE
+  INCLUDE_DIRS "src" "tb"
+  VERILATOR_ARGS --timing --trace-structs
+  PREFIX Vtop
+  SOURCES tb/cache_tb.sv
+)
+
