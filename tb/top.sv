@@ -1,9 +1,18 @@
 localparam Width = rvcpu::Width;
 
+// `define WITH_RAM
+
 module top (
     input logic clk,
     input logic rst,
     input logic irq,
+
+`ifndef WITH_RAM
+    output logic [Width-1:0] mem_addr,
+    input logic [Width-1:0] mem_r_data,
+    output logic [Width-1:0] mem_w_data,
+    output logic [3:0] mem_w_mask,
+`endif
 
     output logic exception,
     output logic wfi
@@ -21,6 +30,7 @@ instruction_memory #(.Width(Width)) imem(
 
 wire logic mem_we;
 wire logic mem_re;
+`ifdef WITH_RAM
 wire rvcpu::addr_t mem_addr;
 wire rvcpu::data_t mem_r_data;
 wire rvcpu::data_t mem_w_data;
@@ -36,6 +46,7 @@ ram #(.AddrBusWidth(Width), .DataBusWidth(Width)) ram(
   .w_sel(mem_w_mask),
   .w_data(mem_w_data)
 );
+`endif
 
 riscv_core core(
   .clk(clk), .rst(rst),
