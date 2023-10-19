@@ -1,3 +1,71 @@
+module cache_tag_mem #(
+    parameter IndexBits,
+    parameter TagBits,
+    parameter N
+)(
+    input logic clk,
+    input logic rst,
+
+    input logic [IndexBits-1:0] req_index,
+    input logic req_we,
+
+    input logic [TagBits-1:0] write_tag,
+    input logic write_dirty,
+    input logic write_valid,
+
+    output logic [TagBits-1:0] read_tag,
+    output logic read_dirty,
+    output logic read_valid
+);
+
+typedef struct packed {
+    logic valid;
+    logic dirty;
+    logic [TagBits-1:0] tag;
+} cache_tag_t;
+
+cache_tag_t mem[N-1:0];
+
+assign read_tag = mem[req_index].tag;
+assign read_valid = mem[req_index].valid;
+assign read_dirty = mem[req_index].dirty;
+
+always @(posedge clk) begin
+    if(rst) begin
+        for(integer k = 0; k < N; k = k + 1) begin
+            mem[k].valid = 0'b0;
+        end
+    end else if(req_we) begin
+        mem[req_index] <= {write_valid, write_dirty, write_tag};
+    end
+end
+
+endmodule
+
+module cache_memory #(
+    parameter Width = 64,
+    parameter N = 256
+) (
+    input logic clk,
+    input logic rst,
+
+    input logic re,
+    input logic[N-1:0] index,
+
+    output logic[Width-1:0] data
+);
+
+always @ (posedge clk) begin
+    if(rst) begin
+        data <= 0;
+    end else if(re) begin
+        data <= mem[index];
+    end else begin
+        data <= 0;
+    end
+end
+
+endmodule
 
 module cache #(
     parameter AddrBusWidth = 32,
@@ -33,11 +101,7 @@ wire [TagBits-1:0]   addr_tag = addr[AddrBusWidth-1:AddrBusWidth - TagBits];
 wire [IndexBits-1:0] addr_index = addr[(WordBits+BlockBits+IndexBits-1):(WordBits+BlockBits)];
 wire [BlockBits-1:0] addr_bs = addr[WordBits+BlockBits-1:WordBits];
 
-reg [TagBits-1:0]     tag[N-1:0];
-reg                   valid[N-1:0];
 reg [Blocks-1:0] [CacheBusWidth-1:0] mem [N-1:0];
-
-wire cache_hit = valid[addr_index] & tag[addr_index] == addr_tag;
 
 typedef enum [1:0] {
     IDLE       = 'b00, // no memory access
@@ -61,14 +125,24 @@ reg [IndexBits-1:0] write_index;
 reg [BlockBits-1:0] write_bs;
 reg [MemBusWidth-1:0] write_data;
 
-reg [IndexBits-1:0] valid_index;
-reg                 valid_flag;
-reg [TagBits-1:0]   valid_tag;
+reg valid_flag;
 
 reg next_done;
 
-state_t state;
-state_t next_state;
+struct packed {
+    logic valid;
+    logic dirty;
+    logic [TagBits-1:0] tag;
+} ctag;
+
+cache_tag_mem #(.TagBits(TagBits), .IndexBits(IndexBits), .N(N)) tag_mem (
+    .clk(clk), .rst(rst),
+    .req_index(addr_index), .req_we(valid_flag),
+    .write_tag(addr_tag), .write_dirty('b0), .write_valid(valid_flag),
+    .read_tag(ctag.tag), .read_dirty(ctag.dirty), .read_valid(ctag.valid)
+);
+
+wire cache_hit = ctag.valid & ctag.tag == addr_tag;
 
 always @ (posedge clk) begin
     if(rst) begin
@@ -98,12 +172,11 @@ always @(posedge clk) begin
     end
 end
 
+state_t state;
+state_t next_state;
+
 always @(posedge clk) begin
     if(rst) begin
-        for(integer k = 0; k < N; k = k + 1) begin
-            valid[k] = 0'b0;
-        end
-
         state <= IDLE;
         current_tag <= 0;
         current_index <= 0;
@@ -111,11 +184,6 @@ always @(posedge clk) begin
         done <= 1'b0;
         busy <= 1'b0;
     end else begin
-        if(valid_flag) begin
-            valid[valid_index] <= 1;
-            tag[valid_index] <= valid_tag;
-        end
-
         done <= next_done;
         state <= next_state;
         current_tag <= next_current_tag;
@@ -138,8 +206,6 @@ always @(*) begin
     write_data = 0;
     write_bs = 0;
 
-    valid_index = 0;
-    valid_tag = 0;
     valid_flag = 1'b0;
 
     mem_avail = 1'b0;
@@ -155,9 +221,7 @@ always @(*) begin
             next_current_tag = addr_tag;
             next_current_index = addr_index;
             next_current_bs = addr_bs;
-            valid_index = addr_index;
             valid_flag = 1'b1;
-            valid_tag = addr_tag;
         end
     end
 
