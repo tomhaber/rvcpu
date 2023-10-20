@@ -8,16 +8,20 @@ reg clk;
 reg rst;
 
 reg [AddrWidth-1:0] addr;
-wire logic[CacheBusWidth-1:0] data;
+wire logic[CacheBusWidth-1:0] r_data;
+reg [CacheBusWidth-1:0] w_data;
 wire logic busy;
 wire logic done;
 reg re;
+reg we;
 
 wire logic [AddrWidth-1:0] mem_addr;
-reg [MemBusWidth-1:0] mem_data;
+reg [MemBusWidth-1:0] mem_r_data;
+wire [MemBusWidth-1:0] mem_w_data;
 reg mem_busy = 1'b0;
 reg mem_done = 1'b0;
-wire logic mem_avail;
+wire logic mem_re;
+wire logic mem_we;
 
 cache #(
     .AddrBusWidth(AddrWidth),
@@ -27,19 +31,16 @@ cache #(
 ) cache(
     .clk(clk), .rst(rst),
     .mem_addr(mem_addr),
-    .mem_data(mem_data),
+    .mem_r_data(mem_r_data),
+    .mem_w_data(mem_w_data),
     .mem_busy(mem_busy),
     .mem_done(mem_done),
-    .mem_avail(mem_avail),
-    .addr(addr), .data(data), .re(re),
+    .mem_re(mem_re),
+    .mem_we(mem_we),
+    .addr(addr),
+    .r_data(r_data), .w_data(w_data),
+    .re(re), .we(we),
     .busy(busy), .done(done)
-);
-
-wire logic [3:0] rnd;
-lfsr #(.Width(4), .TapMask(4'b1001)) lfsr(
-    .clk(clk), .rst(rst), .enable(1'b1),
-    .seed(4'b1001),
-    .data(rnd)
 );
 
 integer misses = 0;
@@ -55,11 +56,14 @@ initial begin
     fp = $fopen(fname, "r");
     clk = 0;
     re = 0;
+    we = 0;
     misses = 0;
     count = 0;
 
     rst = 1;
     #10 rst = 0;
+
+// #200 $finish;
 end
 
 always @(posedge clk) begin
@@ -76,9 +80,9 @@ always @(posedge clk) begin
     end
 end
 
-always @(mem_avail) begin
-    if(mem_avail) begin
-        mem_data = {(MemBusWidth/32){$random}};
+always @(mem_re) begin
+    if(mem_re) begin
+        mem_r_data = {(MemBusWidth/32){$random}};
         mem_done = 1'b1;
         misses = misses + 1;
     end else begin
