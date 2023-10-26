@@ -9,15 +9,16 @@ module alu #(
 );
 
 logic [Width-1:0] eff_b;
-logic [Width:0] sum;
+logic [Width-1:0] sum;
 
 logic [$clog2(Width)-1:0] shamt;
 
 wire logic invert_b = op[3];
+logic cout;
 
 always_comb begin
     eff_b = (invert_b) ? ~b : b;
-    sum = a + eff_b + {{Width{'0}},invert_b};
+    {cout, sum} = a + eff_b + {{Width{'0}},invert_b};
     shamt = b[$clog2(Width)-1:0];
 
     case (op)
@@ -33,9 +34,9 @@ always_comb begin
     endcase
 
     flags.zero = res == '0;
-    flags.overflow = (a[7] == eff_b[7]) && (a[7] != res[7]);
+    flags.overflow = (a[Width-1] == eff_b[Width-1]) && (a[Width-1] != res[Width-1]);
     flags.negative = res[7];
-    flags.carry = sum[Width];
+    flags.carry = cout;
 end
 
 endmodule
