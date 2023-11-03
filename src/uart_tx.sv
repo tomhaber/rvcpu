@@ -31,7 +31,7 @@ localparam ClockDivBits = $clog2(ClockDivider);
 
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
-typedef enum { READY, LOAD, SEND } state_t;
+typedef enum logic [1:0] { READY, LOAD, SEND } state_t;
 state_t state, next_state;
 
 localparam MaxCount = ClockDivBits'(ClockDivider-1);
@@ -47,7 +47,12 @@ shift_out_register #(.Width(TotalBits)) shift_out (
     .clk(clk), .rst(rst),
     .serial_in(1'b1), .serial_out(out_bit),
     .enable(state == LOAD),
-    .parallel_input({1'b0, data_in, {ParityBits{parity(data_in)}}, {StopBits{1'b0}}}),
+    .parallel_input({
+        {StopBits{1'b1}},
+        {ParityBits{parity(data_in)}},
+        data_in,
+        {StartBits{1'b0}}
+    }),
     .parallel_load(state == READY && data_in_valid)
 );
 
@@ -85,7 +90,7 @@ end
 always_ff @(posedge clk or posedge rst) begin
     if(state == READY || rst) begin
         bit_idx <= 0;
-    end else if(state == LOAD) begin
+    end else if(state == SEND && next_state == LOAD) begin
         bit_idx <= bit_idx + 1;
     end
 end

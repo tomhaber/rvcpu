@@ -39,7 +39,7 @@ localparam ClockDivBits = $clog2(ClockDivider);
 wire logic [TotalBits-1:0] rx_data;
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
-typedef enum { IDLE, RECV, DONE } state_t;
+typedef enum logic[1:0] { IDLE, RECV, DONE } state_t;
 state_t state, next_state;
 
 localparam MaxCount = ClockDivBits'(ClockDivider-1);
@@ -49,14 +49,14 @@ logic input_latched;
 wire logic bit_done = (state == RECV) && (counter == MaxCount);
 
 shift_in_register #(.Width(TotalBits), .ResetValue(1'b1)) shift_in (
-    .clk(clk && bit_done), .rst(rst),
+    .clk(clk), .rst(rst), .enable(bit_done),
     .serial_in(input_latched), .serial_out(),
     .parallel_output(rx_data)
 );
 
 function static data_check(logic [TotalBits-1:0] data);
 $display("stop %b", rx_data[StopMSB:StopLSB]);
-    return (rx_data[StopMSB:StopLSB] == 1'b0) &&
+    return (rx_data[StopMSB:StopLSB] == 1'b1) &&
         (ParityBits == 0) ? 1'b1 : (^data[DataBits-1:0] == data[PartityLSB]);
 endfunction
 
