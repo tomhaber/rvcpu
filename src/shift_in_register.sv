@@ -7,6 +7,7 @@ module shift_in_register #(
 
     input logic serial_in,
     output logic serial_out,
+    input logic enable,
 
     output logic [Width-1:0] parallel_output
 );
@@ -16,7 +17,7 @@ logic [Width:0] sreg;
 always_ff @(posedge clk or posedge rst) begin
     if(rst)
         sreg <= {(Width+1){ResetValue}};
-    else
+    else if(enable)
         sreg <= {serial_in, sreg[Width:1]};
 end
 
