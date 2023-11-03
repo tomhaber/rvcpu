@@ -29,7 +29,6 @@ localparam MaxBitIdx = TotalBits-1;
 
 localparam ClockDivBits = $clog2(ClockDivider);
 
-logic [TotalBits-1:0] tx_data;
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum { READY, LOAD, SEND } state_t;
@@ -43,6 +42,14 @@ wire logic bit_done = counter == MaxCount;
 function static parity(input logic [DataBits-1:0] data);
     return ^data;
 endfunction
+
+shift_out_register #(.Width(TotalBits)) shift_out (
+    .clk(clk), .rst(rst),
+    .serial_in(1'b1), .serial_out(out_bit),
+    .enable(state == LOAD),
+    .parallel_input({1'b0, data_in, {ParityBits{parity(data_in)}}, {StopBits{1'b0}}}),
+    .parallel_load(state == READY && data_in_valid)
+);
 
 always_comb begin
     unique case(state)
@@ -77,20 +84,12 @@ end
 // bit counter
 always_ff @(posedge clk or posedge rst) begin
     if(state == READY || rst) begin
-        out_bit <= 1'b1;
         bit_idx <= 0;
     end else if(state == LOAD) begin
         bit_idx <= bit_idx + 1;
-        out_bit <= tx_data[bit_idx];
     end
 end
 
 assign ready = state == READY;
-
-// Latch input
-always_ff @(posedge clk) begin
-    if(state == READY && data_in_valid)
-        tx_data <= {1'b0, data_in, {ParityBits{parity(data_in)}}, {StopBits{1'b0}}};
-end
 
 endmodule

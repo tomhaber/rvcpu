@@ -36,7 +36,7 @@ localparam StopMSB = StopLSB + StopBits - 1;
 
 localparam ClockDivBits = $clog2(ClockDivider);
 
-logic [TotalBits-1:0] rx_data;
+wire logic [TotalBits-1:0] rx_data;
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum { IDLE, RECV, DONE } state_t;
@@ -46,7 +46,13 @@ localparam MaxCount = ClockDivBits'(ClockDivider-1);
 logic [ClockDivBits-1:0] counter;
 
 logic input_latched;
-wire logic bit_done = counter == MaxCount;
+wire logic bit_done = (state == RECV) && (counter == MaxCount);
+
+shift_in_register #(.Width(TotalBits), .ResetValue(1'b1)) shift_in (
+    .clk(clk && bit_done), .rst(rst),
+    .serial_in(input_latched), .serial_out(),
+    .parallel_output(rx_data)
+);
 
 function static data_check(logic [TotalBits-1:0] data);
 $display("stop %b", rx_data[StopMSB:StopLSB]);
@@ -116,9 +122,7 @@ end
 always_ff @(posedge clk) begin
     if(state == IDLE)
         bit_idx <= 0;
-    else if(state == RECV && bit_done) begin
-        $display("latch data %d %b", bit_idx, input_latched);
-        rx_data[bit_idx] <= input_latched;
+    else if(bit_done) begin
         bit_idx <= bit_idx + 1;
     end
 end
