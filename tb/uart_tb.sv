@@ -36,7 +36,7 @@ initial begin
 end
 
 int index = 0;
-string str = "Hello\015\n";
+string str = "Hello world\n";
 
 always_ff@(posedge clk)
 begin

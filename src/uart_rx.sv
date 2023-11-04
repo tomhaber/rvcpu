@@ -2,7 +2,7 @@ module uart_rx #(
     parameter ClockDivider = 8,
     parameter DataBits = 8,
     parameter StopBits = 1,
-    parameter ParityBits = 0
+    parameter Parity = 0 /* 0 = none, 1 = even, 2 = odd */
 ) (
     input logic clk,
     input logic rst,
@@ -20,11 +20,12 @@ initial begin
         $error("DataBits needs to be in [5,9]");
     if(StopBits < 1 || StopBits > 2)
         $error("StopBits needs to be either 1 or 2");
-    if(ParityBits < 0 || ParityBits > 1)
-        $error("ParityBits needs to be either 0 or 1");
+    if(Parity < 0 || Parity > 2)
+        $error("ParityBits needs to be either 0, 1 or 2");
 end
 
 localparam StartBits = 1;
+localparam ParityBits = (Parity == 0) ? 0 : 1;
 localparam TotalBits = StartBits + DataBits + ParityBits + StopBits;
 localparam MaxBitIdx = TotalBits-1;
 
@@ -54,10 +55,10 @@ shift_in_register #(.Width(TotalBits), .ResetValue(1'b1)) shift_in (
     .parallel_output(rx_data)
 );
 
-function static data_check(logic [TotalBits-1:0] data);
-$display("stop %b", rx_data[StopMSB:StopLSB]);
+function automatic data_check(logic [TotalBits-1:0] data);
+    logic parity = (Parity == 1) ? ^data[DataBits-1:0] : ~(^data[DataBits-1:0]);
     return (rx_data[StopMSB:StopLSB] == 1'b1) &&
-        (ParityBits == 0) ? 1'b1 : (^data[DataBits-1:0] == data[PartityLSB]);
+        (ParityBits == 0) ? 1'b1 : (parity == data[PartityLSB]);
 endfunction
 
 always_comb begin

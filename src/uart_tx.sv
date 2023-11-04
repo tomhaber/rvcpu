@@ -2,7 +2,7 @@ module uart_tx #(
     parameter ClockDivider = 8,
     parameter DataBits = 8,
     parameter StopBits = 1,
-    parameter ParityBits = 0
+    parameter Parity = 0 /* 0 = none, 1 = even, 2 = odd */
 ) (
     input logic clk,
     input logic rst,
@@ -19,11 +19,12 @@ initial begin
         $error("DataBits needs to be in [5,9]");
     if(StopBits < 1 || StopBits > 2)
         $error("StopBits needs to be either 1 or 2");
-    if(ParityBits < 0 || ParityBits > 1)
-        $error("ParityBits needs to be either 0 or 1");
+    if(Parity < 0 || Parity > 2)
+        $error("ParityBits needs to be either 0, 1 or 2");
 end
 
 localparam StartBits = 1;
+localparam ParityBits = (Parity == 0) ? 0 : 1;
 localparam TotalBits = StartBits + DataBits + ParityBits + StopBits;
 localparam MaxBitIdx = TotalBits-1;
 
@@ -39,8 +40,8 @@ logic [ClockDivBits-1:0] counter;
 
 wire logic bit_done = counter == MaxCount;
 
-function static parity(input logic [DataBits-1:0] data);
-    return ^data;
+function automatic parity(input logic [DataBits-1:0] data);
+    return (Parity == 1) ? ^data : ~(^data);
 endfunction
 
 shift_out_register #(.Width(TotalBits)) shift_out (
@@ -95,6 +96,6 @@ always_ff @(posedge clk or posedge rst) begin
     end
 end
 
-assign ready = state == READY;
+assign ready = next_state == READY;
 
 endmodule
