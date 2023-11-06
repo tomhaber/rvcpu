@@ -1,7 +1,7 @@
 module counter #(
-    parameter Low = 0,
-    parameter High = 8,
-    parameter Width = $clog2(High),
+    parameter Width = 8,
+    parameter [Width-1:0] Low = 0,
+    parameter [Width-1:0] High = 2**Width,
     parameter [Width-1:0] Increment = 1,
     parameter [Width-1:0] Initial = Low
 ) (
@@ -21,11 +21,6 @@ module counter #(
     output logic [Width-1:0] count
 );
 
-initial begin
-    if(Initial < Low || Initial > High)
-        $error("Illegal value for Initial");
-end
-
 logic [Width-1:0] carry_in_selected, eff_b;
 logic [Width-1:0] sum;
 
@@ -43,11 +38,11 @@ always_comb begin
         next_count = data;
         next_overflow = 1'b0;
     end else if(enable) begin
-        if(count ==Width'(Low) && (up0_down1 == 1'b1)) begin
-            next_count = Width'(High);
+        if(count == Low && (up0_down1 == 1'b1)) begin
+            next_count = High;
             next_overflow = 1'b1;
-        end else if(count == Width'(High) && (up0_down1 == 1'b0)) begin
-            next_count = Width'(Low);
+        end else if(count == High && (up0_down1 == 1'b0)) begin
+            next_count = Low;
             next_overflow = 1'b1;
         end else begin
             next_count = sum;

@@ -4,7 +4,7 @@ logic Clock, Reset, Enable;
 logic [3:0] Count;
 logic overflow;
 
-counter #(.High(9), .Initial(1), .Low(1)) cnt (
+counter #(.Width(4), .High(4'd5), .Initial(4'd0), .Low(-4'd5)) cnt (
     .clk(Clock),
     .rst(Reset),
     .enable(Enable),
