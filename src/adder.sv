@@ -18,7 +18,7 @@ always_comb begin
     carry_in_selected = (up0_down1 == 1'b0) ? {{(Width-1){1'b0}}, carry_in} : {(Width){carry_in}};
     eff_b = (up0_down1 == 1'b0) ? b : ~b;
     neg_off = (up0_down1 == 1'b0) ? {Width{1'b0}} : {{(Width-1){1'b0}}, 1'b1};
-    {carry_out, sum} = {1'b0, a} + {1'b0, eff_b} + {1'b0, carry_in_selected};
+    {carry_out, sum} = a + eff_b + neg_off + carry_in_selected;
 end
 
 always_comb begin

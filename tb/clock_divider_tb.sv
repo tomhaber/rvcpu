@@ -1,20 +1,13 @@
-module counter_tb;
+module clock_divider_tb;
 
 logic Clock, Reset, Enable;
-logic [3:0] Count;
-logic overflow;
+logic clk_out;
 
-counter #(.Width(4), .Initial(4'd0)) cnt (
+clock_divider #(.Width(4), .Divisor(4)) cnt (
     .clk(Clock),
     .rst(Reset),
     .enable(Enable),
-    .count(Count),
-    .up0_down1(1'b0),
-    .carry_in(1'b0),
-    .carry_out(),
-    .overflow(overflow),
-    .load(1'b0),
-    .load_count(0)
+    .clk_out(clk_out)
 );
 
 initial begin
@@ -34,6 +27,10 @@ initial begin
     #11    Reset     = 1;
     #14    Reset     = 0;
     #20    Enable    = 1;
+    #200   Enable    = 0;
+    #220   Enable    = 1;
+    #55   Reset     = 1;
+    #20   Reset     = 0;
     #10000 $finish;
 end
 
