@@ -35,28 +35,6 @@ initial begin
     #100000 $finish;
 end
 
-int index = 0;
-string str = "Hello world\n";
-
-always_ff@(posedge clk)
-begin
-    if(rst) begin
-        index = 0;
-        data_valid = 0;
-    end else begin
-        data = str[index];
-
-        if( uart_ready ) begin
-            if( index<str.len() ) begin
-                data_valid = 1;
-                index++;
-            end else begin
-                data_valid = 0;
-            end
-        end
-    end
-end
-
 logic[7:0] received_data;
 logic data_received, break_recv, error;
 uart_rx#(.ClockDivider(10)) rx (
@@ -65,4 +43,40 @@ uart_rx#(.ClockDivider(10)) rx (
     .data_out(received_data), .data_valid(data_received),
     .break_received(break_recv), .error(error)
 );
+
+int tx_ind = 0;
+int rx_ind = 0;
+string str = "Hello world\n";
+
+always_ff@(posedge clk)
+begin
+    if(rst) begin
+        tx_ind = 0;
+        rx_ind = 0;
+        data_valid = 0;
+    end else begin
+        data = str[tx_ind];
+
+        if( uart_ready ) begin
+            if( tx_ind < str.len() ) begin
+                data_valid = 1;
+                tx_ind++;
+            end else begin
+                data_valid = 0;
+            end
+        end
+
+        if(data_received) begin
+            if(str[rx_ind] != received_data)
+                $error("wrong data received");
+            rx_ind++;
+        end
+    end
+end
+
+always_comb begin
+    if(error || break_recv)
+        $error("error or break received");
+end
+
 endmodule
