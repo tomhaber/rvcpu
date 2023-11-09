@@ -1,8 +1,10 @@
 module spram_generic #(
     parameter MemoryInitFile = "none",
+    parameter MemoryPrimitive = "",
+    parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeBytes = 1024
+    parameter MemSizeWords = 1024
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -13,13 +15,15 @@ module spram_generic #(
     output reg  [DataBusWidth-1:0] r_data
 );
 
-localparam MemSizeWords = (MemSizeBytes / (DataBusWidth/8));
 localparam AddrBits = $clog2(MemSizeWords);
 
-if( AddrBits > AddrBusWidth)
-    $error($sformatf("Illegal values for parameters AddrBusWidth (%0d) and MemSizeBytes (%0d)", AddrBusWidth, MemSizeBytes));
+if(AddrBits > AddrBusWidth)
+    $error($sformatf("Illegal values for parameters AddrBusWidth (%0d) and MemSizeWords (%0d)", AddrBusWidth, MemSizeWords));
 
 typedef logic[AddrBits-1:0] addr_t;
+
+(* ram_style            = MemoryPrimitive *)
+(* rw_addr_collision    = MemoryAddrCollision *)
 reg [DataBusWidth-1:0] data[MemSizeWords -1:0];
 
 function addr_t addr_to_index(logic [AddrBusWidth-1:0] addr);

@@ -1,8 +1,10 @@
 module spram #(
     parameter MemoryInitFile = "none",
+    parameter MemoryPrimitive = "auto",
+    parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeBytes = 2048
+    parameter MemSizeWords = 8
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -13,10 +15,12 @@ module spram #(
     output reg  [DataBusWidth-1:0] r_data
 );
 
+localparam MemSizeBits = (MemSizeWords*DataBusWidth/8);
+
 `ifdef VIVADO
 xpm_memory_spram #(
     .ECC_MODE("no_ecc"),
-    .MEMORY_PRIMITIVE("auto"),
+    .MEMORY_PRIMITIVE(MemoryPrimitive),
     .MEMORY_SIZE(),
     .USE_MEM_INIT(MemoryInitFile != "none"),
     .MEMORY_INIT_FILE(MemoryInitFile),
@@ -26,9 +30,9 @@ xpm_memory_spram #(
     .READ_DATA_WIDTH_A(DataBusWidth),
     .BYTE_WRITE_WIDTH_A(DataBusWidth),
     .READ_LATENCY_A(1),
-    .WRITE_MODE_A("read_first"),
+    .WRITE_MODE_A(MemoryAddrCollision == "yes" ? "write_first" : "read_first"),
     .WRITE_PROTECT(1),
-    .MEMORY_SIZE(MemSizeBytes*8)
+    .MEMORY_SIZE(MemSizeBits)
 ) ram (
     .clka(clk),
     .rsta(rst),
@@ -43,7 +47,7 @@ spram_generic #(
     .MemoryInitFile(MemoryInitFile),
     .AddrBusWidth(AddrBusWidth),
     .DataBusWidth(DataBusWidth),
-    .MemSizeBytes(MemSizeBytes)
+    .MemSizeWords(MemSizeWords)
 ) ram (
     .clk(clk), .rst(rst),
     .re(re), .addr(addr),

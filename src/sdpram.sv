@@ -1,8 +1,10 @@
 module sdpram #(
     parameter MemoryInitFile = "none",
+    parameter MemoryPrimitive = "auto",
+    parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeBytes = 2048
+    parameter MemSizeWords = 0
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -14,11 +16,13 @@ module sdpram #(
     output reg  [DataBusWidth-1:0] r_data_b
 );
 
+localparam MemSizeBits = (MemSizeWords*DataBusWidth/8);
+
 `ifndef VERILATOR
 xpm_memory_sdpram #(
     .ECC_MODE("no_ecc"),
     .CLOCKING_MODE("common_clock"),
-    .MEMORY_PRIMITIVE("auto"),
+    .MEMORY_PRIMITIVE(MemoryPrimitive),
     .USE_MEM_INIT(MemoryInitFile != "none"),
     .MEMORY_INIT_FILE(MemoryInitFile),
     .SIM_ASSERT_CHK(1),
@@ -31,10 +35,10 @@ xpm_memory_sdpram #(
     .READ_DATA_WIDTH_B(DataBusWidth),
     .READ_LATENCY_B(1),
     .READ_RESET_VALUE_B("0"),
-    .WRITE_MODE_B("read_first"),
+    .WRITE_MODE_B(MemoryAddrCollision == "yes" ? "write_first" : "read_first"),
 
     .WRITE_PROTECT(1),
-    .MEMORY_SIZE(MemSizeBytes*8)
+    .MEMORY_SIZE(MemSizeBits)
 ) ram (
     .clka(clk),
     .ena(~rst),
@@ -52,7 +56,7 @@ sdpram_generic #(
     .MemoryInitFile(MemoryInitFile),
     .AddrBusWidth(AddrBusWidth),
     .DataBusWidth(DataBusWidth),
-    .MemSizeBytes(MemSizeBytes)
+    .MemSizeWords(MemSizeWords)
 ) ram (
     .clk(clk), .rst(rst),
 
