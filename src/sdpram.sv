@@ -16,7 +16,8 @@ module sdpram #(
     output reg  [DataBusWidth-1:0] r_data_b
 );
 
-localparam MemSizeBits = (MemSizeWords*DataBusWidth/8);
+localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
+localparam MemSizeBits = (MemSizeWords_i*DataBusWidth);
 
 `ifndef VERILATOR
 xpm_memory_sdpram #(

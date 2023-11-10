@@ -4,7 +4,7 @@ module spram_generic #(
     parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeWords = 1024
+    parameter MemSizeWords = 0
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -15,6 +15,7 @@ module spram_generic #(
     output reg  [DataBusWidth-1:0] r_data
 );
 
+localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
 localparam AddrBits = $clog2(MemSizeWords);
 
 if(AddrBits > AddrBusWidth)

@@ -4,7 +4,7 @@ module sdpram_generic #(
     parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeWords = 8
+    parameter MemSizeWords = 0
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -18,8 +18,10 @@ module sdpram_generic #(
     output reg  [DataBusWidth-1:0] r_data_b
 );
 
-localparam WordSizeBits = $clog2(DataBusWidth) - 3;
-localparam AddrBits = $clog2(MemSizeWords);
+localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
+localparam AddrBits = $clog2(MemSizeWords_i);
+
+initial $display("words %0d %d %d", MemSizeWords_i, AddrBusWidth, DataBusWidth);
 
 if(AddrBits > AddrBusWidth)
     $error($sformatf("Illegal values for parameters AddrBusWidth (%0d) and MemSizeWords (%0d)", AddrBusWidth, MemSizeWords));

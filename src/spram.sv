@@ -4,7 +4,7 @@ module spram #(
     parameter MemoryAddrCollision = "",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
-    parameter MemSizeWords = 8
+    parameter MemSizeWords = 0
 ) (
     input  wire                    clk,
     input  wire                    rst,
@@ -15,7 +15,8 @@ module spram #(
     output reg  [DataBusWidth-1:0] r_data
 );
 
-localparam MemSizeBits = (MemSizeWords*DataBusWidth/8);
+localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
+localparam MemSizeBits = (MemSizeWords_i*DataBusWidth);
 
 `ifdef VIVADO
 xpm_memory_spram #(
