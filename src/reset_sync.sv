@@ -1,5 +1,5 @@
 module reset_sync #(
-    parameter ResetActiveState = 0, // Active low (0) or active high (>0)
+    parameter ResetActiveState = 1, // Active low (0) or active high (>0)
     parameter ExtraDepth = 0
 ) (
     input logic clk,
