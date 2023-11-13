@@ -1,4 +1,4 @@
-`define CLK @(posedge clk)
+`define CLK @(negedge clk)
 module sync_fifo_tb;
 
 typedef logic[7:0] data_t;
@@ -57,6 +57,15 @@ initial begin
     pop_data(8'hCC);
 
     if(!empty_o) $error("fifo is not empty");
+    `CLK;
+    pop_i = 1'b1;
+    push_i = 1'b1;
+    push_data_i = 8'hFF;
+    `CLK;
+    pop_i = 1'b0;
+    push_i = 1'b0;
+
+    repeat(2) `CLK;
     $finish();
 end
 

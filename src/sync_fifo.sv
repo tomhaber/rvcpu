@@ -36,20 +36,57 @@ counter #(.Width(AddrBits+1)) read_address (
     .count(rd_addr)
 );
 
-wire logic same_addr = (wr_addr[AddrBits-1:0] == rd_addr[AddrBits-1:0]);
-assign empty = same_addr && (wr_addr[AddrBits] == rd_addr[AddrBits]);
-assign full = same_addr && (wr_addr[AddrBits] != rd_addr[AddrBits]);
+assign empty = wr_addr == rd_addr;
+assign full = {~wr_addr[AddrBits], wr_addr[AddrBits-1:0]} == rd_addr;
 
-wire logic we_i = we && !full;
-wire logic re_i = re && !empty;
+logic passthrough;
+T r_data_i;
+assign r_data = passthrough ? w_data : r_data_i;
+
+logic we_i, re_i;
 
 sdpram #(.AddrBusWidth(AddrBits), .DataBusWidth($bits(T)), .MemSizeWords(Depth)) mem (
     .clk(clk), .rst(rst),
     .addr_a(wr_addr[AddrBits-1:0]), .we_a(we_i), .w_data_a(w_data),
-    .addr_b(rd_addr[AddrBits-1:0]), .re_b(re_i), .r_data_b(r_data)
+    .addr_b(rd_addr[AddrBits-1:0]), .re_b(re_i), .r_data_b(r_data_i)
 );
+
+always_comb begin
+    case({re, we})
+
+    2'b00: begin
+        we_i = 1'b0;
+        re_i = 1'b0;
+        passthrough = 1'b0;
+    end
+
+    2'b10: begin
+        re_i = !empty;
+        we_i = 1'b0;
+        passthrough = 1'b0;
+    end
+
+    2'b01: begin
+        re_i = 1'b0;
+        we_i = !full;
+        passthrough = 1'b0;
+    end
+
+    2'b11: begin
+        if(empty || full) begin
+            re_i = 1'b0;
+            we_i = 1'b0;
+            passthrough = 1'b1;
+        end else begin
+            re_i = 1'b1;
+            we_i = 1'b1;
+            passthrough = 1'b0;
+        end
+    end
+
+    endcase
+end
 
 assign wr_addr_incr = we_i;
 assign rd_addr_incr = re_i;
-
 endmodule
