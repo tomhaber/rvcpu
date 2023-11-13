@@ -24,7 +24,7 @@ if(AddrBits > AddrBusWidth)
 
 (* ram_style            = MemoryPrimitive *)
 (* rw_addr_collision    = MemoryAddrCollision *)
-reg [DataBusWidth-1:0] data[MemSizeWords -1:0];
+reg [DataBusWidth-1:0] data[MemSizeWords_i -1:0];
 
 typedef logic[AddrBits-1:0] addr_t;
 function addr_t addr_to_index(logic [AddrBusWidth-1:0] addr);
