@@ -24,7 +24,7 @@ counter
     .clk(clk),
     .rst(1'b0),
     .up0_down1(1'b1),
-    .enable(enable),
+    .enable(enable_i),
     .load(load),
     .load_count(Count),
     .carry_in(1'b0),
