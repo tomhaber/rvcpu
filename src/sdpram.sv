@@ -2,18 +2,19 @@ module sdpram #(
     parameter MemoryInitFile = "none",
     parameter MemoryPrimitive = "auto",
     parameter MemoryAddrCollision = "",
+    parameter ReadLatency = 1,  // combinatorial (0) or registers (1+)
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
     parameter MemSizeWords = 0
 ) (
-    input  wire                    clk,
-    input  wire                    rst,
-    input  wire [AddrBusWidth-1:0] addr_a,
-    input  wire                    we_a,
-    input  wire [DataBusWidth-1:0] w_data_a,
-    input  wire                    re_b,
-    input  wire [AddrBusWidth-1:0] addr_b,
-    output reg  [DataBusWidth-1:0] r_data_b
+    input  logic                    clk,
+    input  logic                    rst,
+    input  logic [AddrBusWidth-1:0] addr_a,
+    input  logic                    we_a,
+    input  logic [DataBusWidth-1:0] w_data_a,
+    input  logic                    re_b,
+    input  logic [AddrBusWidth-1:0] addr_b,
+    output logic [DataBusWidth-1:0] r_data_b
 );
 
 localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
@@ -34,9 +35,9 @@ xpm_memory_sdpram #(
 
     .ADDR_WIDTH_B(AddrBusWidth),
     .READ_DATA_WIDTH_B(DataBusWidth),
-    .READ_LATENCY_B(1),
+    .READ_LATENCY_B(ReadLatency),
     .READ_RESET_VALUE_B("0"),
-    .WRITE_MODE_B(MemoryAddrCollision == "yes" ? "write_first" : "read_first"),
+    .WRITE_MODE_B(MemoryAddrCollision == "yes" ? "write_first" : ((MemoryAddrCollision == "no") : "no_change" : "read_first")),
 
     .WRITE_PROTECT(1),
     .MEMORY_SIZE(MemSizeBits)
@@ -55,6 +56,7 @@ xpm_memory_sdpram #(
 `else
 sdpram_generic #(
     .MemoryInitFile(MemoryInitFile),
+    .ReadLatency(ReadLatency),
     .AddrBusWidth(AddrBusWidth),
     .DataBusWidth(DataBusWidth),
     .MemSizeWords(MemSizeWords)

@@ -2,42 +2,41 @@ module sdpram_generic #(
     parameter MemoryInitFile = "none",
     parameter MemoryPrimitive = "",
     parameter MemoryAddrCollision = "",
+    parameter ReadLatency = 1,
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
     parameter MemSizeWords = 0
 ) (
-    input  wire                    clk,
-    input  wire                    rst,
+    input  logic                    clk,
+    input  logic                    rst,
 
-    input  wire                    we_a,
-    input  wire [AddrBusWidth-1:0] addr_a,
-    input  wire [DataBusWidth-1:0] w_data_a,
+    input  logic                    we_a,
+    input  logic [AddrBusWidth-1:0] addr_a,
+    input  logic [DataBusWidth-1:0] w_data_a,
 
-    input  wire                    re_b,
-    input  wire [AddrBusWidth-1:0] addr_b,
-    output reg  [DataBusWidth-1:0] r_data_b
+    input  logic                    re_b,
+    input  logic [AddrBusWidth-1:0] addr_b,
+    output logic [DataBusWidth-1:0] r_data_b
 );
 
 localparam MemSizeWords_i = (MemSizeWords > 0) ? MemSizeWords : (2**AddrBusWidth);
 localparam AddrBits = $clog2(MemSizeWords_i);
 
-initial $display("words %0d %d %d", MemSizeWords_i, AddrBusWidth, DataBusWidth);
-
 if(AddrBits > AddrBusWidth)
     $error($sformatf("Illegal values for parameters AddrBusWidth (%0d) and MemSizeWords (%0d)", AddrBusWidth, MemSizeWords));
-
-typedef logic[AddrBits-1:0] addr_t;
 
 (* ram_style            = MemoryPrimitive *)
 (* rw_addr_collision    = MemoryAddrCollision *)
 reg [DataBusWidth-1:0] data[MemSizeWords -1:0];
 
+typedef logic[AddrBits-1:0] addr_t;
 function addr_t addr_to_index(logic [AddrBusWidth-1:0] addr);
     return addr[AddrBits-1:0];
 endfunction
 
-wire addr_t a = addr_to_index(addr_a);
-wire addr_t b = addr_to_index(addr_b);
+addr_t a, b;
+assign a = addr_to_index(addr_a);
+assign b = addr_to_index(addr_b);
 
 initial begin
     if(MemoryInitFile != "none") begin
@@ -51,12 +50,23 @@ always @ (posedge clk) begin
     end
 end
 
-always @ (posedge clk) begin
-    if (rst) begin
-        r_data_b <= 0;
-    end else begin
-        r_data_b <= re_b ? data[b] : 0;
-    end
-end
+genvar i;
+generate
+    if(ReadLatency > 0) begin
+        for(i = 0; i < ReadLatency; ++i) begin : reg_outs
+            logic [DataBusWidth-1:0] data_i;
+            logic [DataBusWidth-1:0] data_r;
+            always_ff @(posedge clk) data_r <= data_i;
+        end : reg_outs
 
+        assign reg_outs[0].data_i = data[b];
+        for(i = 1; i < ReadLatency; ++i) begin
+            assign reg_outs[i].data_i = reg_outs[i-1].data_r;
+        end
+
+        assign r_data_b = reg_outs[ReadLatency-1].data_r;
+    end else begin
+        assign r_data_b = data[b];
+    end
+endgenerate
 endmodule : sdpram_generic
