@@ -33,12 +33,13 @@ localparam ClockDivBits = $clog2(ClockDivider);
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum logic [1:0] { READY, LOAD, SEND } state_t;
-state_t state, next_state;
+state_t state = READY, next_state;
 
 localparam MaxCount = ClockDivBits'(ClockDivider-1);
 logic [ClockDivBits-1:0] counter;
 
-wire logic bit_done = counter == MaxCount;
+logic bit_done;
+assign bit_done = counter == MaxCount;
 
 function automatic parity(input logic [DataBits-1:0] data);
     return (Parity == 1) ? ^data : ~(^data);
@@ -96,6 +97,6 @@ always_ff @(posedge clk or posedge rst) begin
     end
 end
 
-assign ready = next_state == READY;
+assign ready = state == READY;
 
 endmodule

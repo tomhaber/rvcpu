@@ -27,7 +27,7 @@ end
 initial begin
     // Dump waves
     $dumpfile("dump.vcd");
-    $dumpvars(1, test);
+    $dumpvars(1, top);
 
     rst = 1'b1;
     #100 rst = 1'b0;
@@ -37,6 +37,7 @@ end
 
 logic[7:0] received_data;
 logic data_received, break_recv, error;
+
 uart_rx#(.ClockDivider(10)) rx (
     .clk(clk), .rst(rst),
     .input_bit(uart_out),
@@ -48,33 +49,30 @@ int tx_ind = 0;
 int rx_ind = 0;
 string str = "Hello world\n";
 
-always_ff@(posedge clk)
-begin
+always_ff@(posedge clk) begin
     if(rst) begin
-        tx_ind = 0;
-        rx_ind = 0;
-        data_valid = 0;
+        tx_ind <= 0;
+        rx_ind <= 0;
+        data_valid <= 0;
     end else begin
         data = str[tx_ind];
+        data_valid <= ( tx_ind < str.len() );
 
-        if( uart_ready ) begin
+        if( data_valid && uart_ready ) begin
             if( tx_ind < str.len() ) begin
-                data_valid = 1;
-                tx_ind++;
-            end else begin
-                data_valid = 0;
+                tx_ind <= tx_ind + 1;
             end
-        end
-
-        if(data_received) begin
-            if(str[rx_ind] != received_data)
-                $error("wrong data received");
-            rx_ind++;
         end
     end
 end
 
-always_comb begin
+always_ff@(posedge clk) begin
+    if(data_received) begin
+        if(str[rx_ind] != received_data)
+            $error("wrong data received");
+        rx_ind++;
+    end
+
     if(error || break_recv)
         $error("error or break received");
 end

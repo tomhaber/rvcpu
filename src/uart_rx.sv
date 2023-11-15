@@ -41,13 +41,14 @@ wire logic [TotalBits-1:0] rx_data;
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum logic[1:0] { IDLE, RECV, DONE } state_t;
-state_t state, next_state;
+state_t state = IDLE, next_state;
 
 localparam MaxCount = ClockDivBits'(ClockDivider-1);
 logic [ClockDivBits-1:0] counter;
 
 logic input_latched;
-wire logic bit_done = (state == RECV) && (counter == MaxCount);
+logic bit_done;
+assign bit_done = (state == RECV) && (counter == MaxCount);
 
 shift_in_register #(.Width(TotalBits), .ResetValue(1'b1)) shift_in (
     .clk(clk), .rst(rst), .enable(bit_done),
