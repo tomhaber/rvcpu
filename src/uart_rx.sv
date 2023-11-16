@@ -94,6 +94,8 @@ always_comb begin
             next_state = RECV;
     end
 
+    default: next_state = IDLE;
+
     endcase
 end
 

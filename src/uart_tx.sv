@@ -41,20 +41,22 @@ logic [ClockDivBits-1:0] counter;
 logic bit_done;
 assign bit_done = counter == MaxCount;
 
-function automatic parity(input logic [DataBits-1:0] data);
-    return (Parity == 1) ? ^data : ~(^data);
+function automatic logic[TotalBits-1:0] data_build(logic [DataBits-1:0] data);
+    if(Parity > 0) begin
+        logic parity = (Parity == 1) ? ^data : ~(^data);
+        return {{StopBits{1'b1}},{ParityBits{parity}},data,{StartBits{1'b0}}};
+    end else begin
+        return {{StopBits{1'b1}},data,{StartBits{1'b0}}};
+    end
 endfunction
 
 shift_out_register #(.Width(TotalBits)) shift_out (
     .clk(clk), .rst(rst),
     .serial_in(1'b1), .serial_out(out_bit),
     .enable(state == LOAD),
-    .parallel_input({
-        {StopBits{1'b1}},
-        {ParityBits{parity(data_in)}},
-        data_in,
-        {StartBits{1'b0}}
-    }),
+    .parallel_input(
+        data_build(data_in)
+    ),
     .parallel_load(state == READY && data_in_valid)
 );
 
@@ -62,13 +64,17 @@ always_comb begin
     unique case(state)
 
     READY: next_state = (data_in_valid) ? LOAD : READY;
+
     LOAD: next_state = SEND;
+
     SEND: begin
         if(bit_done)
             next_state = (bit_idx == MaxBitIdx) ? READY : LOAD;
         else
             next_state = SEND;
     end
+
+    default: next_state = READY;
 
     endcase
 end
