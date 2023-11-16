@@ -41,7 +41,7 @@ edge_detect ed(
 );
 
 logic clk_cnt;
-clock_divider #(.Width(14)) clk_div(
+clock_divider #(.Width(22)) clk_div(
     .clk(clk), .rst(rst), .enable(sw), .clk_out(clk_cnt)
 );
 
@@ -65,13 +65,18 @@ sdpram #(
     .addr_b(addr), .re_b(1'b1), .r_data_b(pattern_data)
 );
 
+localparam CLOCK_HZ = 8_000_000;
+localparam BAUDRATE = 115200;
+localparam OVERSAMPLE_RATE = BAUDRATE*16;
+localparam DIVIDER = (CLOCK_HZ+OVERSAMPLE_RATE-1) / OVERSAMPLE_RATE;
+
 logic uart_ready;
 logic data_valid = 1'b1;
 
 logic [7:0] data;
 assign data = {4'h4, pattern_data};
 
-uart_tx #(.ClockDivider(10)) tx (
+uart_tx #(.ClockDivider(DIVIDER)) tx (
     .clk(clk), .rst(rst),
     .data_in(data), .data_in_valid(data_valid),
     .out_bit(uart_rxd_out), .ready(uart_ready)
@@ -80,7 +85,7 @@ uart_tx #(.ClockDivider(10)) tx (
 logic[7:0] received_data;
 logic data_received, break_recv, error;
 
-uart_rx#(.ClockDivider(10)) rx (
+uart_rx#(.ClockDivider(DIVIDER)) rx (
     .clk(clk), .rst(rst),
     .input_bit(uart_txd_in),
     .data_out(received_data), .data_valid(data_received),
