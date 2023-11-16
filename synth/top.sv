@@ -7,10 +7,10 @@ module top (
     input logic sw_raw,
     output logic[5:2] led,
 
-    output logic[7:0] ja
+    output logic[7:0] ja,
 
-//    input logic uart_txd_in,
-//    output logic uart_rxd_out
+    input logic uart_txd_in,
+    output logic uart_rxd_out
 );
 
 logic clk;
@@ -65,6 +65,29 @@ sdpram #(
     .addr_b(addr), .re_b(1'b1), .r_data_b(pattern_data)
 );
 
-assign led = addr[3:0];
-assign ja = {pattern_data, sw_changed, sw, clk_cnt, clk};
+logic uart_ready;
+logic data_valid = 1'b1;
+
+logic [7:0] data;
+assign data = {4'h4, pattern_data};
+
+uart_tx #(.ClockDivider(10)) tx (
+    .clk(clk), .rst(rst),
+    .data_in(data), .data_in_valid(data_valid),
+    .out_bit(uart_rxd_out), .ready(uart_ready)
+);
+
+logic[7:0] received_data;
+logic data_received, break_recv, error;
+
+uart_rx#(.ClockDivider(10)) rx (
+    .clk(clk), .rst(rst),
+    .input_bit(uart_txd_in),
+    .data_out(received_data), .data_valid(data_received),
+    .break_received(break_recv), .error(error)
+);
+
+assign led = pattern_data;
+assign ja = {data_received, error, uart_txd_in, uart_rxd_out, uart_ready, sw, clk_cnt, clk};
+
 endmodule
