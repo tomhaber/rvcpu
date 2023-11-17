@@ -1,4 +1,5 @@
 module ram #(
+    parameter MemoryInitFile = "none",
     parameter AddrBusWidth = 32,
     parameter DataBusWidth = 32,
     parameter MemSizeBytes = 1024
@@ -28,28 +29,31 @@ wire addr_t r_a = addr_to_index(r_addr);
 wire addr_t w_a = addr_to_index(w_addr);
 
 initial begin
-    for(integer index = 0; index < MemSizeWords; index = index + 1) begin
-        data[index] = $random;
+    if(MemoryInitFile == "none") begin
+        for(integer index = 0; index < MemSizeWords; index = index + 1) begin
+            data[index] = DataBusWidth'($random);
+        end
+    end else begin
+        $readmemh(MemoryInitFile, data);
     end
 end
 
 always @ (posedge clk) begin
     if (!rst && we) begin
-        if(w_sel[0]) data[w_a][7:0] <= w_data[7:0];
-        if(w_sel[1]) data[w_a][15:8] <= w_data[15:8];
-        if(w_sel[2]) data[w_a][23:16] <= w_data[23:16];
-        if(w_sel[3]) data[w_a][31:24] <= w_data[31:24];
+        for(integer i = 0; i < (DataBusWidth/8); ++i)
+            if(w_sel[i]) begin
+                data[w_a][i*8 +: 8] <= w_data[i*8 +: 8];
+            end
     end
 end
 
-// always @ (posedge clk) begin
-always @(*) begin
+always @ (posedge clk) begin
     if (rst) begin
-        r_data = 0;
+        r_data <= 0;
     end else if (re) begin
-        r_data = data[r_a];
+        r_data <= data[r_a];
     end else begin
-        r_data = 0;
+        r_data <= 0;
     end
 end
 
