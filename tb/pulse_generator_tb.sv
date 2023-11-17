@@ -1,13 +1,13 @@
-module clock_divider_tb;
+module pulse_generator_tb;
 
 logic Clock, Reset, Enable;
 logic clk_out;
 
-clock_divider #(.Width(4), .Divisor(4)) cnt (
+pulse_generator #(.Width(4), .Divisor(4)) cnt (
     .clk(Clock),
     .rst(Reset),
     .enable(Enable),
-    .clk_out(clk_out)
+    .pulse_out(clk_out)
 );
 
 initial begin

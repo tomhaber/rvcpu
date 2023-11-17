@@ -41,8 +41,10 @@ edge_detect ed(
 );
 
 logic clk_cnt;
-clock_divider #(.Width(22)) clk_div(
-    .clk(clk), .rst(rst), .enable(sw), .clk_out(clk_cnt)
+pulse_generator #(.Width(22)) div (
+    .clk(clk), .rst(rst),
+    .divisor({22{1'b1}}),
+    .enable(sw), .pulse_out(clk_cnt)
 );
 
 logic [5:0] addr;

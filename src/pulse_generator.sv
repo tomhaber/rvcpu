@@ -1,32 +1,34 @@
-module clock_divider #(
-    parameter Width = 8,
-    parameter [Width-1:0] Divisor = (2**Width)-1
+module pulse_generator #(
+    parameter Width = 0,
+    parameter InitialDivisor = 0
 ) (
     input logic clk,
     input logic rst,
 
+    input logic [Width_i-1:0] divisor,
+
     input logic enable,
-    output logic clk_out
+    output logic pulse_out
 );
 
-localparam Count = Divisor - Width'(1);
+localparam Width_i = (Width > 0) ? Width : $clog2(InitialDivisor);
 
-wire logic [Width-1:0] count;
+logic [Width_i-1:0] count;
 logic enable_i;
 logic load;
 
 counter
 #(
-    .Width(Width),
+    .Width(Width_i),
     .Increment(1),
-    .Initial(Count)
+    .Initial(Width_i'(InitialDivisor))
 ) cntr (
     .clk(clk),
     .rst(1'b0),
     .up0_down1(1'b1),
     .enable(enable_i),
     .load(load),
-    .load_count(Count),
+    .load_count(divisor),
     .carry_in(1'b0),
     .carry_out(),
     .overflow(),
@@ -39,7 +41,7 @@ always_comb begin
     done = enable && (count == 0);
     load = done || rst;
     enable_i = enable && (count != 0);
-    clk_out = done && !rst;
+    pulse_out = done && !rst;
 end
 
 endmodule
