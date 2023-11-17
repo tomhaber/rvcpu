@@ -52,7 +52,6 @@ string str = "Hello world\n";
 always_ff@(posedge clk) begin
     if(rst) begin
         tx_ind <= 0;
-        rx_ind <= 0;
         data_valid <= 0;
     end else begin
         data = str[tx_ind];
@@ -67,10 +66,12 @@ always_ff@(posedge clk) begin
 end
 
 always_ff@(posedge clk) begin
-    if(data_received) begin
+    if(rst) begin
+        rx_ind <= 0;
+    end else if(data_received) begin
         if(str[rx_ind] != received_data)
             $error("wrong data received");
-        rx_ind++;
+        rx_ind <= rx_ind + 1;
     end
 
     if(error || break_recv)
