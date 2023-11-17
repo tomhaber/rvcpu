@@ -1,2 +1,3 @@
 riscv_iss/
 Build/
+obj_dir/
