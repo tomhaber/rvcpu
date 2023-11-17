@@ -1,3 +1,5 @@
+`define CLK @(negedge clk)
+
 // Testbench
 module test;
 
@@ -10,9 +12,12 @@ reg  [4:0] address;
 wire [7:0] data_read;
 
 sdpram #(
-    .MemSizeBytes(32),
+    .MemSizeWords(32),
     .AddrBusWidth(5),
-    .DataBusWidth(8)
+    .DataBusWidth(8),
+    .MemoryPrimitive("block"),
+    .MemoryAddrCollision("no"),
+    .ReadLatency(1)
 ) RAM (
     .clk(clk), .rst(rst),
     .addr_a(address),
@@ -23,40 +28,45 @@ sdpram #(
     .r_data_b(data_read)
 );
 
-  initial begin
+initial begin
+  clk = 0;
+  forever #10 clk = ~clk;
+end
+
+initial begin
     // Dump waves
     $dumpfile("dump.vcd");
     $dumpvars(1, test);
 
-    clk = 0;
     rst = 0;
     write_enable = 0;
     read_enable = 0;
+    data_write = 8'hFF;
     address = 5'h1B;
+    `CLK;
 
     $display("Read initial data.");
     read_enable = 1;
-    toggle_clk;
+    `CLK;
     $display("data[%0h]: %0h", address, data_read);
 
     $display("Write new data.");
     read_enable = 1;
     write_enable = 1;
     data_write = 8'hC5;
-    toggle_clk;
+    repeat(2) `CLK;
     write_enable = 0;
+    data_write = 8'hXX;
+    address = 5'hXX;
     $display("data[%0h]: %0h", address, data_read);
+    repeat(5) `CLK;
 
     $display("Read new data.");
     read_enable = 1;
-    toggle_clk;
+    address = 5'h1B;
+    `CLK;
     $display("data[%0h]: %0h", address, data_read);
-  end
 
-  task toggle_clk;
-    begin
-      #10 clk = ~clk;
-      #10 clk = ~clk;
-    end
-  endtask
+    #100 $finish;
+end
 endmodule

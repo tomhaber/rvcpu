@@ -59,14 +59,14 @@ generate
             always_ff @(posedge clk) data_r <= data_i;
         end : reg_outs
 
-        assign reg_outs[0].data_i = data[b];
+        assign reg_outs[0].data_i = (re_b & !rst) ? data[b] : 0;
         for(i = 1; i < ReadLatency; ++i) begin
             assign reg_outs[i].data_i = reg_outs[i-1].data_r;
         end
 
         assign r_data_b = reg_outs[ReadLatency-1].data_r;
     end else begin
-        assign r_data_b = data[b];
+        assign r_data_b = (re_b & !rst) ? data[b] : 0;
     end
 endgenerate
 endmodule : sdpram_generic
