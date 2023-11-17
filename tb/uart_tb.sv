@@ -9,8 +9,7 @@ logic data_valid;
 logic uart_out;
 logic uart_ready;
 
-
-uart_tx #(.ClockDivider(10)) tx (
+uart_tx #(.BaudDivider(10)) tx (
     .clk(clk), .rst(rst),
     .data_in(data), .data_in_valid(data_valid),
     .out_bit(uart_out), .ready(uart_ready)
@@ -38,7 +37,7 @@ end
 logic[7:0] received_data;
 logic data_received, break_recv, error;
 
-uart_rx#(.ClockDivider(10)) rx (
+uart_rx#(.BaudDivider(10)) rx (
     .clk(clk), .rst(rst),
     .input_bit(uart_out),
     .data_out(received_data), .data_valid(data_received),

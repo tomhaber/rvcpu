@@ -1,5 +1,5 @@
 module uart_tx #(
-    parameter ClockDivider = 8,
+    parameter BaudDivider = 8,
     parameter DataBits = 8,
     parameter StopBits = 1,
     parameter Parity = 0 /* 0 = none, 1 = even, 2 = odd */
@@ -28,18 +28,10 @@ localparam ParityBits = (Parity == 0) ? 0 : 1;
 localparam TotalBits = StartBits + DataBits + ParityBits + StopBits;
 localparam MaxBitIdx = TotalBits-1;
 
-localparam ClockDivBits = $clog2(ClockDivider);
-
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum logic [1:0] { READY, LOAD, SEND } state_t;
 state_t state = READY, next_state;
-
-localparam MaxCount = ClockDivBits'(ClockDivider-1);
-logic [ClockDivBits-1:0] counter;
-
-logic bit_done;
-assign bit_done = counter == MaxCount;
 
 function automatic logic[TotalBits-1:0] data_build(logic [DataBits-1:0] data);
     if(Parity > 0) begin
@@ -49,6 +41,15 @@ function automatic logic[TotalBits-1:0] data_build(logic [DataBits-1:0] data);
         return {{StopBits{1'b1}},data,{StartBits{1'b0}}};
     end
 endfunction
+
+localparam BaudBits = $clog2(BaudDivider);
+
+logic bit_done;
+pulse_generator #(.Width(BaudBits), .InitialDivisor(BaudDivider-1)) baud_gen (
+    .clk(clk), .rst(state == READY),
+    .divisor(BaudBits'(BaudDivider-1)),
+    .enable(1'b1), .pulse_out(bit_done)
+);
 
 shift_out_register #(.Width(TotalBits)) shift_out (
     .clk(clk), .rst(rst),
@@ -84,14 +85,6 @@ always_ff @(posedge clk or posedge rst) begin
         state <= READY;
     else
         state <= next_state;
-end
-
-// clock divider
-always_ff @(posedge clk) begin
-    if(state == READY || counter == MaxCount)
-        counter <= 0;
-    else
-        counter <= counter + 1;
 end
 
 // bit counter

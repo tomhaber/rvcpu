@@ -1,5 +1,5 @@
 module uart_rx #(
-    parameter ClockDivider = 8,
+    parameter BaudDivider = 8,
     parameter DataBits = 8,
     parameter StopBits = 1,
     parameter Parity = 0 /* 0 = none, 1 = even, 2 = odd */
@@ -35,20 +35,22 @@ localparam PartityLSB = StartBits + DataBits;
 localparam StopLSB = PartityLSB + ParityBits;
 localparam StopMSB = StopLSB + StopBits - 1;
 
-localparam ClockDivBits = $clog2(ClockDivider);
-
-wire logic [TotalBits-1:0] rx_data;
+logic [TotalBits-1:0] rx_data;
 logic [$clog2(TotalBits)-1:0] bit_idx;
 
 typedef enum logic[1:0] { IDLE, RECV, DONE } state_t;
 state_t state = IDLE, next_state;
 
-localparam MaxCount = ClockDivBits'(ClockDivider-1);
-logic [ClockDivBits-1:0] counter;
+localparam BaudBits = $clog2(BaudDivider);
+
+logic bit_done;
+pulse_generator #(.Width(BaudBits), .InitialDivisor(BaudDivider-1)) baud_gen (
+    .clk(clk), .rst(state == IDLE),
+    .divisor(BaudBits'((state == IDLE) ? (BaudDivider/2) : (BaudDivider-1))),
+    .enable(state == RECV), .pulse_out(bit_done)
+);
 
 logic input_latched;
-logic bit_done;
-assign bit_done = (state == RECV) && (counter == MaxCount);
 
 shift_in_register #(.Width(TotalBits), .ResetValue(1'b1)) shift_in (
     .clk(clk), .rst(rst), .enable(bit_done),
@@ -108,18 +110,6 @@ always_ff @(posedge clk or posedge rst) begin
         state <= IDLE;
     else
         state <= next_state;
-end
-
-// clock divider
-always_ff @(posedge clk) begin
-    if(state == IDLE)
-        counter <= ClockDivider/2;
-    else if(state == RECV) begin
-        if(counter == MaxCount)
-            counter <= 0;
-        else
-            counter <= counter + 1;
-    end
 end
 
 // bit counter
