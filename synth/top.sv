@@ -67,11 +67,10 @@ sdpram #(
 
 localparam CLOCK_HZ = 8_000_000;
 localparam BAUDRATE = 115200;
-localparam OVERSAMPLE_RATE = BAUDRATE*16;
-localparam DIVIDER = (CLOCK_HZ+OVERSAMPLE_RATE-1) / OVERSAMPLE_RATE;
+localparam DIVIDER = (CLOCK_HZ+BAUDRATE-1) / BAUDRATE;
 
 logic uart_ready;
-logic data_valid = 1'b1;
+logic data_valid = clk_cnt;
 
 logic [7:0] data;
 assign data = {4'h4, pattern_data};
