@@ -1,4 +1,4 @@
-module top();
+module uart_tb;
 
 logic clk;
 logic rst;

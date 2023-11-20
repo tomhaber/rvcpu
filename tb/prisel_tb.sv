@@ -1,4 +1,4 @@
-module test;
+module prisel_tb;
 
 logic clk;
 logic rst;

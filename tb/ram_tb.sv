@@ -1,7 +1,7 @@
 `define CLK @(negedge clk)
 
 // Testbench
-module test;
+module ram_tb;
 
 reg        clk;
 reg        rst;

@@ -1,4 +1,6 @@
-module regfile_tb ( output logic ready, output logic error);
+module regfile_tb;
+
+logic ready, error;
 
 rvcpu::reg_t rs1;
 rvcpu::reg_t rs2;
@@ -31,8 +33,8 @@ regfile #(.Width(32)) dut (
     .clk(clk), .reset(reset),
     .rs1(rs1), .rs1_valid(rs1_valid),
     .rs2(rs2), .rs2_valid(rs2_valid),
-    .rw(rw), .rw_valid(we), .wval(wval),
-    .rd1(rd1), .rd2(rd2)
+    .rd(rw), .rd_valid(we), .rd_data(wval),
+    .rs1_data(rd1), .rs2_data(rd2)
 );
 
 initial begin
@@ -89,6 +91,11 @@ initial begin
 
 #20
     ready = 1'b1;
+end
+
+always @(error, ready) begin
+    if(ready) $finish;
+    if(error) $stop;
 end
 
 endmodule : regfile_tb

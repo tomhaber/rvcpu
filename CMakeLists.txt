@@ -9,6 +9,7 @@ if (NOT verilator_FOUND)
 endif()
 
 find_package(fmt)
+include(CTest)
 
 add_subdirectory(riscv_iss)
 
@@ -24,13 +25,32 @@ verilate(tb TRACE
   SOURCES src/rvcpu.sv tb/top.sv
 )
 
-add_executable(cache_sim tb/cache_sim.cpp)
-
-# Add the Verilated circuit to the target
-verilate(cache_sim TRACE
-  INCLUDE_DIRS "src" "tb"
-  VERILATOR_ARGS --timing --trace-structs
-  PREFIX Vtop
-  SOURCES tb/cache_tb.sv
+set(TESTBENCHES
+  # cache_tb
+  counter_tb
+  debounce_tb
+  gen_imm_tb
+  ram_tb
+  regfile_tb
+  sync_fifo_tb
+  uart_tb
+  skid_buf_tb
+  sext_tb
+  pulse_generator_tb
+  prisel_tb
 )
 
+foreach(tb ${TESTBENCHES})
+  add_executable(${tb}) # tb/cache_sim.cpp)
+
+  # Add the Verilated circuit to the target
+  verilate(${tb} TRACE
+    INCLUDE_DIRS "src" "tb"
+    VERILATOR_ARGS --timing --trace-structs --main
+    TOP_MODULE ${tb}
+    PREFIX "V${tb}"
+    SOURCES src/rvcpu.sv "tb/${tb}.sv"
+  )
+
+  add_test(NAME ${tb} COMMAND ${tb})
+endforeach(tb ${TESTBENCHES})

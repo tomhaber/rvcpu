@@ -1,4 +1,4 @@
-module top();
+module debounce_tb;
 
 logic clk;
 logic sig_a, sig_b;

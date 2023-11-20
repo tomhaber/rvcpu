@@ -3,10 +3,11 @@ module pulse_generator_tb;
 logic Clock, Reset, Enable;
 logic clk_out;
 
-pulse_generator #(.Width(4), .Divisor(4)) cnt (
+pulse_generator #(.Width(4), .InitialDivisor(4-1)) cnt (
     .clk(Clock),
     .rst(Reset),
     .enable(Enable),
+    .divisor(4-1),
     .pulse_out(clk_out)
 );
 
