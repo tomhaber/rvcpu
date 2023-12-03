@@ -37,6 +37,7 @@ set(TESTBENCHES
   skid_buf_tb
   sext_tb
   pulse_generator_tb
+  clock_divider_tb
   prisel_tb
 )
 
