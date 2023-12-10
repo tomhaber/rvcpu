@@ -39,6 +39,7 @@ set(TESTBENCHES
   pulse_generator_tb
   clock_divider_tb
   prisel_tb
+  qspi_flash_tb
 )
 
 foreach(tb ${TESTBENCHES})
